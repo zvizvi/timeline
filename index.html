@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ציר הזמן — גאונים · ראשונים · אחרונים</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-block">
+      <h1>ציר הזמן של חכמי ישראל</h1>
+      <p class="subtitle">גאונים · ראשונים · אחרונים — חיבוריהם ואירועי העולם</p>
+    </div>
+
+    <div class="controls">
+      <div class="toggle" role="group" aria-label="שנה עברית או לועזית">
+        <button id="btn-heb" class="seg active" type="button">שנה עברית</button>
+        <button id="btn-sec" class="seg" type="button">שנה לועזית</button>
+      </div>
+
+      <div class="legend" id="legend"></div>
+
+      <button id="region-reset" class="region-reset" type="button" hidden></button>
+
+      <label class="evt-toggle">
+        <input type="checkbox" id="show-events" checked />
+        אירועים היסטוריים
+      </label>
+    </div>
+  </header>
+
+  <main class="chart-wrap" id="chart-wrap">
+    <div class="chart" id="chart">
+      <div class="canvas" id="canvas">
+        <div class="grid" id="grid"></div>
+        <div class="events" id="events"></div>
+        <div class="cols" id="cols"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="hint">גלול מעלה ומטה לאורך הדורות · רחף לפרטים · לחצו על שם או אירוע לערך בוויקיפדיה · לחצו על תווית אזור כדי לסנן לפי מרכז תורה</div>
+
+  <div class="map-panel" id="map-panel">
+    <div class="map-head">
+      <span class="map-title">מרכזי התורה בעולם</span>
+      <button id="map-toggle" class="map-toggle" type="button" title="הצג/הסתר מפה">▾</button>
+    </div>
+    <div class="map-body" id="map-body">
+      <svg viewBox="0 0 285 252" id="map-svg" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="285" height="252" fill="var(--sea)"/>
+        <path id="land" d="" fill="var(--land)" stroke="var(--land-edge)" stroke-width="0.6" stroke-linejoin="round"/>
+        <g id="map-dots"></g>
+      </svg>
+      <div class="map-hint" id="map-hint">לחצו על אזור כדי לסנן</div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip" hidden></div>
+
+  <aside class="drawer" id="drawer" hidden>
+    <header class="drawer-head">
+      <div class="dtabs">
+        <button id="d-he" class="dtab active" type="button">עברית</button>
+        <button id="d-en" class="dtab" type="button">English</button>
+      </div>
+      <span class="dtitle" id="d-title"></span>
+      <a id="d-open" class="dopen" target="_blank" rel="noopener" title="פתח בלשונית חדשה">↗</a>
+      <button id="d-close" class="dclose" type="button" title="סגור">✕</button>
+    </header>
+    <div class="dframe-wrap">
+      <iframe id="d-frame" referrerpolicy="no-referrer" loading="lazy"></iframe>
+    </div>
+  </aside>
+
+  <script src="data.js"></script>
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
