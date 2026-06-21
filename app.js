@@ -32,10 +32,13 @@ function enTerm(f) {
 }
 // Hebrew: direct article. English: search-with-go (lands on the article even
 // when the exact title differs), so we never hit a dead link.
-// NB: use the desktop domain — on some networks the .m mobile host's redirect
-// aborts inside an iframe, while the desktop host follows redirects cleanly.
-const heUrl = (term) => "https://he.wikipedia.org/wiki/" + encodeURIComponent(term.replace(/ /g, "_"));
-const enUrl = (term) => "https://en.wikipedia.org/w/index.php?search=" + encodeURIComponent(term) + "&go=Go";
+// Default to the desktop domain — on some networks the .m mobile host's redirect
+// aborts inside an iframe, while the desktop host follows redirects cleanly. The
+// drawer's 📱 toggle opts into the .m host for the nicer mobile reading layout.
+let mobileWiki = localStorage.getItem("mobileWiki") === "1";
+const wikiHost = (lang) => lang + (mobileWiki ? ".m" : "") + ".wikipedia.org";
+const heUrl = (term) => "https://" + wikiHost("he") + "/wiki/" + encodeURIComponent(term.replace(/ /g, "_"));
+const enUrl = (term) => "https://" + wikiHost("en") + "/w/index.php?search=" + encodeURIComponent(term) + "&go=Go";
 
 const y = (year) => (year - START) * PX;     // CE year -> vertical px
 const totalH = y(END);
@@ -123,6 +126,18 @@ function closeDrawer() {
 }
 document.getElementById("d-he").addEventListener("click", () => setDrawerLang("he"));
 document.getElementById("d-en").addEventListener("click", () => setDrawerLang("en"));
+function syncMobileBtn() {
+  const btn = document.getElementById("d-mobile");
+  btn.classList.toggle("active", mobileWiki);
+  btn.setAttribute("aria-pressed", mobileWiki ? "true" : "false");
+}
+document.getElementById("d-mobile").addEventListener("click", () => {
+  mobileWiki = !mobileWiki;
+  localStorage.setItem("mobileWiki", mobileWiki ? "1" : "0");
+  syncMobileBtn();
+  setDrawerLang(drawerLang); // reload the current article on the new host
+});
+syncMobileBtn();
 document.getElementById("d-close").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 
