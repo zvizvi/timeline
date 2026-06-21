@@ -299,6 +299,12 @@ function buildEvents() {
     return { evt, trueY, labelY };
   });
 
+  // solid backing so figures slide cleanly behind the pinned rail
+  const bg = document.createElement("div");
+  bg.className = "erail-bg";
+  bg.style.height = totalH + "px";
+  layer.appendChild(bg);
+
   // full-width correlation line (revealed on hover)
   const hl = document.createElement("div");
   hl.className = "ehl";
@@ -366,7 +372,23 @@ function buildLegend() {
   ).join("");
 }
 
-function renderAll() { buildGrid(); buildCols(); buildEvents(); }
+function renderAll() { buildGrid(); buildCols(); buildEvents(); syncRail(); }
+
+// Pin the events rail to the viewport's left edge during horizontal scroll
+// (RTL-proof: counter the horizontal offset with a transform; vertical scroll
+// is left alone so the rail still tracks the timeline up/down).
+const chartWrap = document.getElementById("chart-wrap");
+let railTx = 0;
+function syncRail() {
+  const ev = document.getElementById("events");
+  if (!ev || ev.style.display === "none") return;
+  const wrapLeft = chartWrap.getBoundingClientRect().left;
+  const baseLeft = ev.getBoundingClientRect().left - railTx; // un-transformed position
+  railTx = wrapLeft - baseLeft;
+  ev.style.transform = `translateX(${railTx}px)`;
+}
+chartWrap.addEventListener("scroll", syncRail, { passive: true });
+window.addEventListener("resize", syncRail);
 
 // ---------- events ----------
 document.getElementById("btn-heb").addEventListener("click", () => setMode("heb"));
