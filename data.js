@@ -405,6 +405,12 @@ const FIGURES = [
     books: [{ y: 1570, he: "המפה / דרכי משה", en: "Ha-Mapah (Ashkenazi glosses on Shulchan Aruch)" }],
   },
   {
+    era: "acharonim", he: "מהרש\"ל (שלמה לוריא)", en: "Maharshal (Shlomo Luria)",
+    born: 1510, died: 1573, circa: true, region: "mizrachEurope", place: "לובלין, פולין",
+    w: "שלמה לוריא", note: "מגדולי פוסקי פולין; בירר את הסוגיה מן התלמוד עד להלכה.",
+    books: [{ y: 1565, he: "ים של שלמה / חכמת שלמה", en: "Yam Shel Shlomo; Chochmat Shlomo" }],
+  },
+  {
     era: "acharonim", he: "האר\"י (יצחק לוריא)", en: "Arizal (Isaac Luria)",
     born: 1534, died: 1572, region: "eretzIsrael", place: "ירושלים → צפת",
     w: "האר\"י", note: "אבי הקבלה הלוריאנית; נכתבה ע\"י תלמידיו.",
