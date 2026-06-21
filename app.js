@@ -9,8 +9,77 @@ const HEB_OFFSET = 3760; // CE -> Hebrew year (approx.)
 const MIN_BAR_H = 88;    // px; short lifespans get a readable minimum (name + years + region chip)
 const MIN_YEARS = MIN_BAR_H / PX;
 
-let mode = "heb";        // "heb" | "sec"
+// UI language: an explicit saved choice wins; otherwise follow the browser
+// (English only if preferred), defaulting to Hebrew.
+const savedLang = localStorage.getItem("lang");
+const prefersEn = (navigator.languages || [navigator.language || ""]).some((l) => l.toLowerCase().startsWith("en"));
+let lang = savedLang === "en" || savedLang === "he" ? savedLang : prefersEn ? "en" : "he";
+
+// Year display ("heb" | "sec"): an explicit saved choice wins; otherwise it
+// follows the language (Hebrew → Hebrew years, English → Common Era).
+const savedMode = localStorage.getItem("yearMode");
+let mode = savedMode === "heb" || savedMode === "sec" ? savedMode : lang === "he" ? "heb" : "sec";
 let selRegion = null;    // active region filter, or null
+
+// ---------- UI strings (RTL Hebrew / LTR English) ----------
+const I18N = {
+  he: {
+    title: "ציר הזמן — גאונים · ראשונים · אחרונים",
+    h1: "ציר הזמן של חכמי ישראל",
+    subtitle: "תנאים · אמוראים · גאונים · ראשונים · אחרונים — חיבוריהם ואירועי העולם",
+    langGroup: "שפת הממשק",
+    yearGroup: "שנה עברית או לועזית",
+    yearHeb: "שנה עברית",
+    yearSec: "שנה לועזית",
+    events: "אירועים היסטוריים",
+    hint: "גלול מעלה ומטה לאורך הדורות · רחף לפרטים · לחצו על שם או אירוע לערך בוויקיפדיה · לחצו על תווית אזור כדי לסנן לפי מרכז תורה",
+    mapTitle: "מרכזי התורה בעולם",
+    mapHint: "לחצו על אזור כדי לסנן",
+    mapToggle: "הצג/הסתר מפה",
+    warn: "שימו לב: הנתונים נוצרו אוטומטית ולא עברו בדיקה אנושית — ייתכנו טעויות בתאריכים, בשמות ובפרטים. אמתו מול מקור מהימן לפני הסתמכות.",
+    warnClose: "סגירת ההודעה",
+    dMobile: "גרסת מובייל של ויקיפדיה",
+    dOpen: "פתח בלשונית חדשה",
+    dClose: "סגור",
+    legendWorld: "היסטוריה עולמית",
+    legendJewish: "היסטוריה יהודית",
+    legendShift: "מעבר מרכז התורה",
+    railHandle: "גררו לשינוי רוחב",
+    barOpen: "לחצו לפתיחת הערך בוויקיפדיה",
+    approx: "לערך",
+    centerMove: "מעבר מרכז התורה",
+    wikiGo: "↗ ויקיפדיה — לחצו לפתיחה",
+  },
+  en: {
+    title: "Timeline — Sages of Israel",
+    h1: "Timeline of the Sages of Israel",
+    subtitle: "Tannaim · Amoraim · Geonim · Rishonim · Acharonim — their works and world events",
+    langGroup: "Interface language",
+    yearGroup: "Hebrew or Common Era year",
+    yearHeb: "Hebrew year",
+    yearSec: "Common era",
+    events: "Historical events",
+    hint: "Scroll up and down through the generations · hover for details · click a name or event for its Wikipedia article · click a region label to filter by Torah center",
+    mapTitle: "Centers of Torah",
+    mapHint: "Click a region to filter",
+    mapToggle: "Show/hide map",
+    warn: "Note: this data was generated automatically and has not been human-verified — dates, names, and details may contain errors. Confirm against a reliable source before relying on it.",
+    warnClose: "Dismiss",
+    dMobile: "Wikipedia mobile version",
+    dOpen: "Open in a new tab",
+    dClose: "Close",
+    legendWorld: "World history",
+    legendJewish: "Jewish history",
+    legendShift: "Torah center moves",
+    railHandle: "Drag to resize",
+    barOpen: "Click to open the Wikipedia article",
+    approx: "approx.",
+    centerMove: "Torah center moves",
+    wikiGo: "↗ Wikipedia — click to open",
+  },
+};
+const t = (k) => I18N[lang][k];
+const isRTL = () => lang === "he";
 
 // English search terms where deriving from the label is unreliable.
 const EN_OVERRIDE = {
@@ -107,9 +176,9 @@ const drawer = document.getElementById("drawer");
 
 function openDrawer(heTerm, enTermStr, title) {
   drawerTerms = { he: heTerm, en: enTermStr, title };
-  drawerLang = "he";
+  drawerLang = lang;            // open in the current UI language
   document.getElementById("d-title").textContent = title;
-  setDrawerLang("he");
+  setDrawerLang(drawerLang);
   drawer.hidden = false;
 }
 function setDrawerLang(lang) {
@@ -142,17 +211,20 @@ document.getElementById("d-close").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 
 function figureTip(f) {
-  const books = f.books.map((b) =>
-    `<div class="b">📖 ${b.he} <span class="by">(${fmtYear(b.y)})</span><br><span style="color:#9b9384">${b.en}</span></div>`
-  ).join("");
+  const books = f.books.map((b) => {
+    const primary = isRTL() ? b.he : b.en, secondary = isRTL() ? b.en : b.he;
+    return `<div class="b">📖 ${primary} <span class="by">(${fmtYear(b.y)})</span><br><span style="color:#9b9384">${secondary}</span></div>`;
+  }).join("");
   const r = REGIONS[f.region];
-  return `<h4>${f.he}</h4>
-    <div class="en">${f.en}</div>
+  const primary = isRTL() ? f.he : f.en, secondary = isRTL() ? f.en : f.he;
+  const region = isRTL() ? `${r.he} · ${r.en}` : `${r.en} · ${r.he}`;
+  return `<h4>${primary}</h4>
+    <div class="en">${secondary}</div>
     <div>${f.note}</div>
-    <div class="meta">${fmtRange(f.born, f.died)}${f.circa ? " (לערך)" : ""} · 📍 ${f.place}</div>
-    <div class="region-tip"><i style="background:${r.color}"></i>${r.he} · ${r.en}</div>
+    <div class="meta">${fmtRange(f.born, f.died)}${f.circa ? " (" + t("approx") + ")" : ""} · 📍 ${f.place}</div>
+    <div class="region-tip"><i style="background:${r.color}"></i>${region}</div>
     <div class="books">${books}</div>
-    <div class="go">↗ ויקיפדיה — לחצו לפתיחה</div>`;
+    <div class="go">${t("wikiGo")}</div>`;
 }
 
 // ---------- builders ----------
@@ -197,17 +269,17 @@ function buildCols() {
     bar.style.setProperty("--c", ERAS[f.era].color);
     bar.style.top = top + "px";
     bar.style.height = h + "px";
-    // RTL: position lanes from the right edge of the field
-    bar.style.right = f._lane * LANE_W + "px";
+    // pack lanes from the reading-start edge: right in RTL, left in LTR
+    bar.style[isRTL() ? "right" : "left"] = f._lane * LANE_W + "px";
     bar.style.width = LANE_W - LANE_GAP + "px";
     bar.innerHTML =
-      `<span class="name">${f.he}</span>` +
+      `<span class="name">${isRTL() ? f.he : f.en}</span>` +
       `<span class="yrs">${fmtRange(f.born, f.died)}</span>` +
-      `<span class="region"><i style="background:${r.color}"></i>${r.he}</span>`;
-    bar.title = "לחצו לפתיחת הערך בוויקיפדיה";
+      `<span class="region"><i style="background:${r.color}"></i>${isRTL() ? r.he : r.en}</span>`;
+    bar.title = t("barOpen");
     bar.addEventListener("mousemove", (e) => showTip(figureTip(f), e));
     bar.addEventListener("mouseleave", hideTip);
-    bar.addEventListener("click", () => { hideTip(); openDrawer(f.w, enTerm(f), f.he); });
+    bar.addEventListener("click", () => { hideTip(); openDrawer(f.w, enTerm(f), isRTL() ? f.he : f.en); });
 
     // region chip → toggle the geographic highlight (don't open Wikipedia)
     bar.querySelector(".region").addEventListener("click", (e) => {
@@ -221,7 +293,8 @@ function buildCols() {
       dot.style.top = (y(b.y) - top) + "px";
       dot.addEventListener("mousemove", (e) => {
         e.stopPropagation();
-        showTip(`<h4>📖 ${b.he}</h4><div class="en">${b.en}</div><div class="meta">${fmtYear(b.y)} · ${f.he}</div>`, e);
+        const bp = isRTL() ? b.he : b.en, bs = isRTL() ? b.en : b.he, fn = isRTL() ? f.he : f.en;
+        showTip(`<h4>📖 ${bp}</h4><div class="en">${bs}</div><div class="meta">${fmtYear(b.y)} · ${fn}</div>`, e);
       });
       dot.addEventListener("mouseleave", hideTip);
       bar.appendChild(dot);
@@ -255,7 +328,7 @@ function applyRegion() {
   if (selRegion) {
     const r = REGIONS[selRegion];
     btn.hidden = false;
-    btn.innerHTML = `<i style="background:${r.color}"></i>${r.he}<span class="x">✕</span>`;
+    btn.innerHTML = `<i style="background:${r.color}"></i>${isRTL() ? r.he : r.en}<span class="x">✕</span>`;
   } else {
     btn.hidden = true;
   }
@@ -281,7 +354,7 @@ function buildMap() {
     return `<g class="mdot" data-region="${key}">
        <circle cx="${r.mx}" cy="${r.my}" r="4.2" fill="${r.color}" stroke="#fff" stroke-width="1.3"></circle>
        ${arrow}
-       <text class="mlabel" x="${r.mx}" y="${ly}" text-anchor="middle">${r.he}</text>
+       <text class="mlabel" x="${r.mx}" y="${ly}" text-anchor="middle">${isRTL() ? r.he : r.en}</text>
      </g>`;
   }).join("");
   g.querySelectorAll(".mdot").forEach((el) =>
@@ -317,21 +390,24 @@ function buildEvents() {
   const elegend = document.createElement("div");
   elegend.className = "elegend";
   elegend.innerHTML =
-    `<span class="eitem"><span class="edot world"></span>היסטוריה עולמית</span>` +
-    `<span class="eitem"><span class="edot jewish">✡</span>היסטוריה יהודית</span>` +
-    `<span class="eitem"><span class="edot shift">⇦</span>מעבר מרכז התורה</span>`;
+    `<span class="eitem"><span class="edot world"></span>${t("legendWorld")}</span>` +
+    `<span class="eitem"><span class="edot jewish">✡</span>${t("legendJewish")}</span>` +
+    `<span class="eitem"><span class="edot shift">⇦</span>${t("legendShift")}</span>`;
   layer.appendChild(elegend);
 
   // resize handle on the rail's inner edge (stays full-height, not translated)
   const handle = document.createElement("div");
   handle.className = "erail-handle";
-  handle.title = "גררו לשינוי רוחב";
+  handle.title = t("railHandle");
   handle.addEventListener("pointerdown", startGutterResize);
   layer.appendChild(handle);
 
-  const spineX = EVT_GUTTER - 1;      // spine sits at the gutter's inner edge
-  const flagInset = 12;               // flag's right edge distance from the spine
-  const flagX = EVT_GUTTER - flagInset;
+  // the rail sits on the physical-left in RTL and physical-right in LTR; the spine
+  // hugs the edge facing the chart (inner edge) either way.
+  const rtl = isRTL();
+  const flagInset = 12;               // flag's edge distance from the spine
+  const spineX = rtl ? EVT_GUTTER - 1 : 1;
+  const flagX = rtl ? EVT_GUTTER - flagInset : flagInset;
   const MINGAP = 23;                  // min vertical spacing between labels
 
   // de-cluster: push overlapping labels down, keep the true year on the spine
@@ -375,21 +451,24 @@ function buildEvents() {
     const flag = document.createElement("div");
     flag.className = evt.shift ? "eflag shift" : evt.j ? "eflag jewish" : "eflag";
     flag.style.top = placed[i].labelY + "px";
-    flag.style.right = flagInset + "px";
+    flag.style[rtl ? "right" : "left"] = flagInset + "px";
     const mark = evt.shift ? `<span class="smark">⇦</span>`
                : evt.j ? `<span class="emark">✡</span>` : "";
-    flag.innerHTML = `${mark}${evt.he}<span class="yr">${fmtYear(evt.y)}</span>`;
+    // event `en` strings carry search hints after ";"/"&"; the flag wants a concise label
+    const enLabel = evt.en.split(/[;&]/)[0].trim();
+    const ep = rtl ? evt.he : enLabel, es = rtl ? evt.en : evt.he;
+    flag.innerHTML = `${mark}${ep}<span class="yr">${fmtYear(evt.y)}</span>`;
     const place = evt.place ? `<div class="meta">📍 ${evt.place}</div>` : "";
-    const note = evt.shift ? `<div class="meta">מעבר מרכז התורה</div>` : "";
+    const note = evt.shift ? `<div class="meta">${t("centerMove")}</div>` : "";
     flag.addEventListener("mousemove", (e) =>
-      showTip(`<h4>${evt.he}</h4><div class="en">${evt.en}</div>` +
+      showTip(`<h4>${ep}</h4><div class="en">${es}</div>` +
               `<div class="meta">${fmtYear(evt.y)}</div>${place}${note}` +
-              `<div class="go">↗ ויקיפדיה — לחצו לפתיחה</div>`, e));
+              `<div class="go">${t("wikiGo")}</div>`, e));
     flag.addEventListener("mouseenter", () => showHL(trueY, evColor(evt)));
     flag.addEventListener("mouseleave", () => { hideTip(); hideHL(); });
     flag.addEventListener("click", () => {
       hideTip();
-      openDrawer(evt.w, evt.en.split(/[;&]/)[0].trim(), evt.he);
+      openDrawer(evt.w, evt.en.split(/[;&]/)[0].trim(), ep);
     });
     fwrap.appendChild(flag);
   });
@@ -397,7 +476,7 @@ function buildEvents() {
 
 function buildLegend() {
   document.getElementById("legend").innerHTML = Object.values(ERAS).map((e) =>
-    `<span class="item"><span class="dot" style="background:${e.color}"></span>${e.he}</span>`
+    `<span class="item"><span class="dot" style="background:${e.color}"></span>${isRTL() ? e.he : e.en}</span>`
   ).join("");
 }
 
@@ -444,10 +523,12 @@ function startGutterResize(e) {
   layer.classList.add("resizing");
   document.body.classList.add("col-resizing");
   hideHL(); hideTip();
-  const railLeft = layer.getBoundingClientRect().left;
+  const rect = layer.getBoundingClientRect();
   let raf = 0;
   const onMove = (ev) => {
-    const w = Math.min(GUTTER_MAX, Math.max(GUTTER_MIN, ev.clientX - railLeft));
+    // inner (chart-facing) edge is the rail's right edge in RTL, left edge in LTR
+    const raw = isRTL() ? ev.clientX - rect.left : rect.right - ev.clientX;
+    const w = Math.min(GUTTER_MAX, Math.max(GUTTER_MIN, raw));
     if (w === EVT_GUTTER) return;
     EVT_GUTTER = w;
     document.documentElement.style.setProperty("--evt-gutter", w + "px");
@@ -468,6 +549,8 @@ function startGutterResize(e) {
 // ---------- events ----------
 document.getElementById("btn-heb").addEventListener("click", () => setMode("heb"));
 document.getElementById("btn-sec").addEventListener("click", () => setMode("sec"));
+document.getElementById("btn-lang-he").addEventListener("click", () => setLang("he"));
+document.getElementById("btn-lang-en").addEventListener("click", () => setLang("en"));
 document.getElementById("show-events").addEventListener("change", renderAll);
 document.getElementById("region-reset").addEventListener("click", () => { selRegion = null; applyRegion(); });
 document.getElementById("map-toggle").addEventListener("click", () =>
@@ -529,15 +612,64 @@ document.getElementById("map-toggle").addEventListener("click", () =>
   head.addEventListener("pointercancel", endDrag);
 })();
 
+function syncYearButtons() {
+  document.getElementById("btn-heb").classList.toggle("active", mode === "heb");
+  document.getElementById("btn-sec").classList.toggle("active", mode === "sec");
+}
 function setMode(m) {
   mode = m;
-  document.getElementById("btn-heb").classList.toggle("active", m === "heb");
-  document.getElementById("btn-sec").classList.toggle("active", m === "sec");
+  localStorage.setItem("yearMode", m); // remember the explicit choice
+  syncYearButtons();
   renderAll();
 }
 
-buildLegend();
-buildMap();
+// ---------- UI language ----------
+function setText(id, str) { const el = document.getElementById(id); if (el) el.textContent = str; }
+function setTitle(id, str) { const el = document.getElementById(id); if (el) el.title = str; }
+
+function applyLang() {
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = isRTL() ? "rtl" : "ltr";
+  document.title = t("title");
+
+  setText("app-title", t("h1"));
+  setText("app-subtitle", t("subtitle"));
+  setText("btn-heb", t("yearHeb"));
+  setText("btn-sec", t("yearSec"));
+  setText("evt-label", t("events"));
+  setText("hint", t("hint"));
+  setText("map-title", t("mapTitle"));
+  setText("map-hint", t("mapHint"));
+  setText("dw-text", t("warn"));
+  setTitle("map-toggle", t("mapToggle"));
+  setTitle("d-mobile", t("dMobile"));
+  setTitle("d-open", t("dOpen"));
+  setTitle("d-close", t("dClose"));
+
+  const lg = document.getElementById("lang-group"); if (lg) lg.setAttribute("aria-label", t("langGroup"));
+  const yg = document.getElementById("year-group"); if (yg) yg.setAttribute("aria-label", t("yearGroup"));
+  const dw = document.getElementById("dw-close"); if (dw) dw.setAttribute("aria-label", t("warnClose"));
+
+  document.getElementById("btn-lang-he").classList.toggle("active", isRTL());
+  document.getElementById("btn-lang-en").classList.toggle("active", !isRTL());
+
+  buildLegend();
+  buildMap();
+  renderAll();
+}
+
+function setLang(l) {
+  if (l === lang) return;
+  lang = l;
+  localStorage.setItem("lang", l);
+  // follow the new language's year default, unless the user chose one explicitly
+  if (!localStorage.getItem("yearMode")) {
+    mode = isRTL() ? "heb" : "sec";
+    syncYearButtons();
+  }
+  applyLang();
+}
 
 // on phones the map and events rail would crowd the timeline; start them out of
 // the way — map collapsed (header only) and the events rail off by default.
@@ -545,4 +677,7 @@ if (isMobile) {
   document.getElementById("map-panel").classList.add("collapsed");
   document.getElementById("show-events").checked = false;
 }
-renderAll();
+
+// `mode` is already resolved (saved choice, else language default); reflect it
+syncYearButtons();
+applyLang();   // sets dir/lang, translates the chrome, and renders everything
