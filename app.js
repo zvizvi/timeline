@@ -273,12 +273,16 @@ function buildMap() {
     el.addEventListener("click", () => toggleRegion(el.dataset.region)));
 }
 
-// gutter width is user-resizable (drag handle on the rail's inner edge); persisted
-const GUTTER_MIN = 150, GUTTER_MAX = 480;
+// gutter width is user-resizable (drag handle on the rail's inner edge); persisted.
+// on phones a 150px+ gutter would swallow the screen, so allow it to go narrower.
+const isMobile = window.innerWidth <= 640;
+const GUTTER_MIN = isMobile ? 92 : 150, GUTTER_MAX = isMobile ? 180 : 480;
 let EVT_GUTTER = (() => {
   const saved = parseFloat(localStorage.getItem("evtGutter"));
   const base = saved || parseFloat(css.getPropertyValue("--evt-gutter")) || 250;
-  return Math.min(GUTTER_MAX, Math.max(GUTTER_MIN, base));
+  // ignore a wide desktop default/saved value on mobile; start compact
+  const want = isMobile && !saved ? 124 : base;
+  return Math.min(GUTTER_MAX, Math.max(GUTTER_MIN, want));
 })();
 document.documentElement.style.setProperty("--evt-gutter", EVT_GUTTER + "px");
 
@@ -499,4 +503,11 @@ function setMode(m) {
 
 buildLegend();
 buildMap();
+
+// on phones the map and events rail would crowd the timeline; start them out of
+// the way — map collapsed (header only) and the events rail off by default.
+if (isMobile) {
+  document.getElementById("map-panel").classList.add("collapsed");
+  document.getElementById("show-events").checked = false;
+}
 renderAll();
