@@ -254,6 +254,12 @@ function buildMap() {
   const land = document.getElementById("land");
   if (land && typeof LAND_PATH === "string") land.setAttribute("d", LAND_PATH);
 
+  const routes = document.getElementById("map-routes");
+  if (routes && typeof MIGRATION !== "undefined") {
+    routes.innerHTML = MIGRATION.map((r) =>
+      `<path d="${r.d}" marker-end="url(#mig-arrow)"><title>${r.he}</title></path>`).join("");
+  }
+
   const g = document.getElementById("map-dots");
   g.innerHTML = Object.entries(REGIONS).map(([key, r]) => {
     const arrow = r.off
@@ -304,11 +310,18 @@ function buildEvents() {
   svg.setAttribute("class", "espine");
   svg.setAttribute("width", EVT_GUTTER);
   svg.setAttribute("height", totalH);
+  const COL = {
+    event: css.getPropertyValue("--event").trim() || "#9333ea",
+    eventj: css.getPropertyValue("--event-j").trim() || "#0d7a6f",
+    shift: css.getPropertyValue("--shift").trim() || "#b7791f",
+  };
+  const evColor = (evt) => evt.shift ? COL.shift : evt.j ? COL.eventj : COL.event;
   let inner = `<line class="spine-line" x1="${spineX}" y1="0" x2="${spineX}" y2="${totalH}"/>`;
   placed.forEach(({ evt, trueY, labelY }) => {
-    const c = evt.j ? "var(--event-j)" : "var(--event)";
+    const c = evColor(evt);
     inner += `<path d="M${spineX} ${trueY} L${flagX} ${labelY}" stroke="${c}" stroke-width="1" fill="none" opacity=".5"/>`;
-    inner += `<circle cx="${spineX}" cy="${trueY}" r="2.8" fill="${c}"/>`;
+    const r = evt.shift ? 3.4 : 2.8;
+    inner += `<circle cx="${spineX}" cy="${trueY}" r="${r}" fill="${c}"/>`;
   });
   svg.innerHTML = inner;
   layer.appendChild(svg);
@@ -321,19 +334,21 @@ function buildEvents() {
 
   placed.forEach(({ evt, trueY }, i) => {
     const flag = document.createElement("div");
-    flag.className = evt.j ? "eflag jewish" : "eflag";
+    flag.className = evt.shift ? "eflag shift" : evt.j ? "eflag jewish" : "eflag";
     flag.style.top = placed[i].labelY + "px";
     flag.style.right = flagInset + "px";
-    const mark = evt.j ? `<span class="emark">✡</span>` : "";
+    const mark = evt.shift ? `<span class="smark">⇦</span>`
+               : evt.j ? `<span class="emark">✡</span>` : "";
     flag.innerHTML = `${mark}${evt.he}<span class="yr">${fmtYear(evt.y)}</span>`;
     const place = evt.place ? `<div class="meta">📍 ${evt.place}</div>` : "";
+    const note = evt.shift ? `<div class="meta">מעבר מרכז התורה</div>` : "";
     flag.addEventListener("mousemove", (e) =>
       showTip(`<h4>${evt.he}</h4><div class="en">${evt.en}</div>` +
-              `<div class="meta">${fmtYear(evt.y)}</div>${place}` +
+              `<div class="meta">${fmtYear(evt.y)}</div>${place}${note}` +
               `<div class="go">↗ ויקיפדיה — לחצו לפתיחה</div>`, e));
     flag.addEventListener("mouseenter", () => {
       hl.style.top = trueY + "px";
-      hl.style.borderTopColor = evt.j ? "var(--event-j)" : "var(--event)";
+      hl.style.borderTopColor = evColor(evt);
       hl.classList.add("show");
     });
     flag.addEventListener("mouseleave", () => { hideTip(); hl.classList.remove("show"); });

@@ -28,6 +28,13 @@ const REGIONS = {
   usa:           { he: "ארצות הברית",  en: "United States", color: "#475569", mx: 14,    my: 115.8, off: true },
 };
 
+// Migration of the Torah center from Bavel westward (~942–1088 CE).
+// Paths are cubic Béziers in the map's 285×252 coordinate space.
+const MIGRATION = [
+  { d: "M258.8,159 C 196,204 80,178 41,121",  he: "בבל ← צפון אפריקה ← ספרד" },
+  { d: "M258.8,159 C 198,112 150,78 95,62",   he: "בבל ← איטליה ← אשכנז" },
+];
+
 // Each figure: born/died in CE. `circa` flags approximate dates.
 const FIGURES = [
   // ---------- GEONIM ----------
@@ -367,12 +374,16 @@ const FIGURES = [
 ];
 
 // Major world / Jewish-history events.
-// j: true marks events that are primarily inner-Jewish history (not chiefly world events)
+// j: true     → inner-Jewish history (not chiefly a world event)
+// shift: true → a step in the migration of the Torah center from Bavel westward
 const EVENTS = [
   { y: 711,  he: "הכיבוש המוסלמי של ספרד", en: "Muslim conquest of Spain", place: "חצי האי האיברי", w: "הכיבוש המוסלמי של ספרד" },
   { y: 767,  he: "ראשית הקראות (ענן בן דוד)", en: "Anan ben David; Karaite schism", place: "בבל", w: "ענן בן דוד", j: true },
   { y: 800,  he: "קרל הגדול מוכתר לקיסר", en: "Charlemagne crowned Emperor", place: "אקס לה שאפל", w: "קרל הגדול" },
-  { y: 1038, he: "סוף תקופת הגאונים", en: "End of the Geonic era", place: "בבל", w: "גאונים", j: true },
+  { y: 942,  he: "שקיעת ישיבת סורא (רס\"ג)", en: "Death of Saadia Gaon; Sura declines", place: "בבל", w: "רב סעדיה גאון", shift: true },
+  { y: 970,  he: "ארבעת השבויים — ייסוד ספרד", en: "Story of the Four Captives", place: "הים התיכון", w: "ארבעת השבויים", shift: true },
+  { y: 1038, he: "סוף תקופת הגאונים", en: "End of the Geonic era", place: "בבל", w: "גאונים", shift: true },
+  { y: 1088, he: "הרי\"ף עולה ללוסינה", en: "Rif moves to Lucena; Spain ascendant", place: "לוסינה, ספרד", w: "רי\"ף", shift: true },
   { y: 1096, he: "מסע הצלב הראשון; גזירות תתנ\"ו", en: "First Crusade; Rhineland massacres", place: "חבל הריין, אשכנז", w: "מסע הצלב הראשון", j: true },
   { y: 1099, he: "הצלבנים כובשים את ירושלים", en: "Crusaders capture Jerusalem", place: "ירושלים", w: "מצור ירושלים (1099)" },
   { y: 1171, he: "עלילת הדם בבלואה", en: "Blois blood libel", place: "בלואה, צרפת", w: "עלילת דם", j: true },
