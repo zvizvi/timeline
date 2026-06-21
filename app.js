@@ -313,6 +313,15 @@ function buildEvents() {
   einner.className = "einner";
   layer.appendChild(einner);
 
+  // pinned legend for the three event types (stays put, not translated)
+  const elegend = document.createElement("div");
+  elegend.className = "elegend";
+  elegend.innerHTML =
+    `<span class="eitem"><span class="edot world"></span>היסטוריה עולמית</span>` +
+    `<span class="eitem"><span class="edot jewish">✡</span>היסטוריה יהודית</span>` +
+    `<span class="eitem"><span class="edot shift">⇦</span>מעבר מרכז התורה</span>`;
+  layer.appendChild(elegend);
+
   // resize handle on the rail's inner edge (stays full-height, not translated)
   const handle = document.createElement("div");
   handle.className = "erail-handle";
@@ -463,6 +472,17 @@ document.getElementById("show-events").addEventListener("change", renderAll);
 document.getElementById("region-reset").addEventListener("click", () => { selRegion = null; applyRegion(); });
 document.getElementById("map-toggle").addEventListener("click", () =>
   document.getElementById("map-panel").classList.toggle("collapsed"));
+
+// ---- dismissible data-quality warning (remembers the dismissal) ----
+(function initDataWarning() {
+  const banner = document.getElementById("data-warning");
+  if (!banner) return;
+  try { if (localStorage.getItem("dataWarnDismissed") === "1") banner.hidden = true; } catch (_) {}
+  document.getElementById("dw-close").addEventListener("click", () => {
+    banner.hidden = true;
+    try { localStorage.setItem("dataWarnDismissed", "1"); } catch (_) {}
+  });
+})();
 
 // ---- draggable map panel (grab the header to move it out of the way) ----
 (function makeMapDraggable() {

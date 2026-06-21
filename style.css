@@ -27,6 +27,23 @@
 
 * { box-sizing: border-box; }
 
+/* warning banner: data is auto-generated and unverified */
+.data-warning {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; font-size: 13.5px; font-weight: 500; line-height: 1.45;
+  color: #7a4a00; background: #fef3c7;
+  border-bottom: 1px solid #f0d98a;
+}
+.data-warning[hidden] { display: none; }
+.data-warning .dw-icon { flex: 0 0 auto; font-size: 15px; }
+.data-warning .dw-text { flex: 1 1 auto; }
+.data-warning .dw-close {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+  color: #7a4a00; font-size: 22px; line-height: 1; padding: 0 4px;
+  opacity: .7; transition: opacity .12s ease;
+}
+.data-warning .dw-close:hover { opacity: 1; }
+
 html, body {
   margin: 0; height: 100%;
   background: var(--bg); color: var(--ink);
@@ -138,6 +155,24 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .events .espine { position: absolute; left: 0; top: 0; overflow: visible; }
 .events .espine .spine-line { stroke: var(--axis); stroke-width: 1; opacity: .55; }
 .events .eflags { position: absolute; left: 0; top: 0; }
+/* pinned legend for the event types — stays put while flags scroll under it */
+.events .elegend {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 7;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 7px 12px 8px; background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 5px 10px -7px rgba(0,0,0,.28);
+  font-size: 11.5px; font-weight: 600; pointer-events: none;
+}
+.events .elegend .eitem { display: inline-flex; align-items: center; gap: 6px; }
+.events .elegend .edot {
+  flex: 0 0 auto; width: 13px; height: 13px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 8.5px; color: #fff; line-height: 1;
+}
+.events .elegend .edot.world  { background: var(--event); }
+.events .elegend .edot.jewish { background: var(--event-j); }
+.events .elegend .edot.shift  { background: var(--shift); }
 /* drag handle on the rail's inner edge to resize the gutter */
 .events .erail-handle {
   position: absolute; top: 0; bottom: 0; right: -4px; width: 9px;
