@@ -435,6 +435,12 @@ const FIGURES = [
     books: [{ y: 1671, he: "מגן אברהם", en: "Magen Avraham (on Orach Chaim)" }],
   },
   {
+    era: "acharonim", he: "פני יהושע (יעקב יהושע פלק)", en: "Pnei Yehoshua (Yaakov Yehoshua Falk)",
+    born: 1680, died: 1756, region: "merkazEurope", place: "קרקוב → פרנקפורט",
+    w: "יעקב יהושע פלק", note: "מגדולי מפרשי התלמוד; עיון מעמיק בסוגיות הש\"ס.",
+    books: [{ y: 1739, he: "פני יהושע", en: "Pnei Yehoshua (Talmudic novellae)" }],
+  },
+  {
     era: "acharonim", he: "אור החיים (חיים בן עטר)", en: "Ohr HaChaim (Chaim ibn Attar)",
     born: 1696, died: 1743, region: "tzfonAfrica", place: "מרוקו → ירושלים",
     w: "חיים בן עטר", note: "פרשן ומקובל; \"אור החיים הקדוש\".",
@@ -457,6 +463,12 @@ const FIGURES = [
     born: 1713, died: 1793, region: "merkazEurope", place: "פראג, בוהמיה",
     w: "יחזקאל לנדא", note: "מגדולי הפוסקים; שו\"ת רב-השפעה.",
     books: [{ y: 1776, he: "נודע ביהודה (שו\"ת)", en: "Noda BiYehuda (responsa)" }],
+  },
+  {
+    era: "acharonim", he: "הפלאה (פנחס הלוי הורוביץ)", en: "Hafla'ah (Pinchas HaLevi Horowitz)",
+    born: 1731, died: 1805, region: "merkazEurope", place: "פרנקפורט, אשכנז",
+    w: "פנחס הורוביץ", note: "תלמיד המגיד ממזריטש ורבה של פרנקפורט; רבו של החת\"ם סופר.",
+    books: [{ y: 1787, he: "ספר הפלאה (כתובות)", en: "Sefer ha-Hafla'ah" }],
   },
   {
     era: "acharonim", he: "הגר\"א (הגאון מווילנא)", en: "Vilna Gaon (Gra)",
