@@ -32,9 +32,8 @@ function enTerm(f) {
 }
 // Hebrew: direct article. English: search-with-go (lands on the article even
 // when the exact title differs), so we never hit a dead link.
-// NB: use the desktop domain — the .m mobile host's redirect aborts inside an
-// iframe on some networks, while desktop follows
-// the redirect cleanly.
+// NB: use the desktop domain — on some networks the .m mobile host's redirect
+// aborts inside an iframe, while the desktop host follows redirects cleanly.
 const heUrl = (term) => "https://he.wikipedia.org/wiki/" + encodeURIComponent(term);
 const enUrl = (term) => "https://en.wikipedia.org/w/index.php?search=" + encodeURIComponent(term) + "&go=Go";
 
