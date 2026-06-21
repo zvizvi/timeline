@@ -147,6 +147,18 @@ const FIGURES = [
 
   // ---------- GEONIM ----------
   {
+    era: "geonim", he: "רב חנן מאישקיא", en: "Rav Chanan of Iskiya",
+    born: 589, died: 609, circa: true, region: "bavel", place: "פומבדיתא, בבל",
+    w: "חנן מאישקיא", note: "ראשון גאוני פומבדיתא — ראשית תקופת הגאונים (כ-589).",
+    books: [],
+  },
+  {
+    era: "geonim", he: "רב אחא משבחא", en: "Rav Acha of Shabcha",
+    born: 680, died: 752, circa: true, region: "bavel", place: "שבחא, בבל → ארץ ישראל",
+    w: "רב אחא משבחא", note: "מחבר ה'שאילתות' — הספר המחברי הראשון לאחר חתימת התלמוד.",
+    books: [{ y: 750, he: "שאילתות דרב אחאי", en: "She'iltot (first authored post-Talmudic work)" }],
+  },
+  {
     era: "geonim", he: "רב יהודאי גאון", en: "Rav Yehudai Gaon",
     born: 700, died: 761, circa: true, region: "bavel", place: "סורא, בבל",
     w: "יהודאי גאון", note: "מראשוני הגאונים שכתבו ספרי פסיקה.",
