@@ -26,15 +26,17 @@ const REGIONS = {
   tzfonAfrica:   { he: "צפון אפריקה",  en: "North Africa",  color: "#dc2626", mx: 101.6, my: 145.8 },
   eretzIsrael:   { he: "ארץ ישראל",    en: "Land of Israel",color: "#0891b2", mx: 216.9, my: 169.2 },
   turkiya:       { he: "תורכיה",        en: "Turkey",        color: "#c026d3", mx: 181,   my: 129 },
+  teiman:        { he: "תימן",          en: "Yemen",         color: "#16a34a", mx: 258,   my: 245 },
   mizrachEurope: { he: "מזרח אירופה",  en: "Eastern Europe",color: "#9333ea", mx: 162.2, my: 45 },
   merkazEurope:  { he: "מרכז אירופה",  en: "Central Europe",color: "#ea580c", mx: 131.5, my: 64.8 },
   iraq:          { he: "בבל (עיראק)",  en: "Iraq",          color: "#92400e", mx: 274.9, my: 177 },
   usa:           { he: "ארצות הברית",  en: "United States", color: "#475569", mx: 14,    my: 115.8, off: true },
 };
 
-// Migration of the Torah center from Bavel westward (~942–1088 CE).
+// Migration of the Torah center: first Eretz Israel → Bavel, then Bavel westward (~942–1088 CE).
 // Paths are cubic Béziers in the map's 285×252 coordinate space.
 const MIGRATION = [
+  { d: "M216.9,169.2 C 228,151 248,148 258.8,159", he: "ארץ ישראל ← בבל" },
   { d: "M258.8,159 C 196,204 80,178 41,121",  he: "בבל ← צפון אפריקה ← ספרד" },
   { d: "M258.8,159 C 198,112 150,78 95,62",   he: "בבל ← איטליה ← אשכנז" },
 ];
@@ -794,6 +796,12 @@ const FIGURES = [
     books: [{ y: 1649, he: "שני לוחות הברית (של\"ה)", en: "Shnei Luchot HaBrit" }],
   },
   {
+    era: "acharonim", he: "מלאכת שלמה (קשלמה עדני)", en: "Melechet Shlomo (Solomon Adeni)",
+    born: 1567, died: 1625, circa: true, region: "teiman", place: "תימן → חברון",
+    w: "שלמה עדני", note: "יליד צנעא שבתימן שעלה לארץ ישראל; מגדולי מפרשי המשנה, בעל הפירוש \"מלאכת שלמה\".",
+    books: [{ y: 1620, he: "מלאכת שלמה (על המשנה)", en: "Melechet Shlomo (Mishnah commentary)" }],
+  },
+  {
     era: "acharonim", he: "סמ\"ע (יהושע פלק כץ)", en: "Sma (Yehoshua Falk Katz)",
     born: 1555, died: 1614, region: "mizrachEurope", place: "לבוב, פולין",
     w: "יהושע פלק כץ", note: "מפרש מרכזי על חושן משפט; חיבר גם דרישה ופרישה על הטור.",
@@ -926,8 +934,8 @@ const FIGURES = [
     books: [{ y: 1742, he: "אור החיים על התורה", en: "Ohr HaChaim (Torah commentary)" }],
   },
   {
-    era: "acharonim", he: "הרש\"ש (ר' שלום שרעבי)", en: "Rashash (Shalom Sharabi)",
-    born: 1720, died: 1777, circa: true, region: "eretzIsrael", place: "תימן → ירושלים",
+    era: "acharonim", he: "הרש\"ש (שלום שרעבי)", en: "Rashash (Shalom Sharabi)",
+    born: 1720, died: 1777, circa: true, region: "teiman", place: "תימן → ירושלים",
     w: "שלום שרעבי", note: "מקובל יליד תימן שעמד בראש ישיבת המקובלים \"בית אל\" בירושלים; מגדולי מפרשי כתבי האר\"י, בעל \"נהר שלום\" וסידור הכוונות.",
     books: [{ y: 1770, he: "נהר שלום / סידור הרש\"ש", en: "Nahar Shalom; Siddur HaRashash" }],
   },
@@ -1644,6 +1652,7 @@ const WIKI_EN = {
   "מרדכי יפה": "Mordecai Yoffe",
   "שלמה לוריא": "Solomon Luria",
   "שמואל אליעזר הלוי איידלס": "Maharsha",
+  "שלמה עדני": "Solomon Adeni",
   "יהושע פלק כץ": "Joshua Falk",
   "יום-טוב ליפמן הלר": "Yom-Tov Lipmann Heller",
   "נתן נטע שפירא": "Nathan Nata Spira",
