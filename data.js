@@ -522,6 +522,12 @@ const FIGURES = [
     books: [{ y: 1420, he: "שו\"ת התשב\"ץ / מגן אבות", en: "Tashbetz responsa; Magen Avot" }],
   },
   {
+    era: "rishonim", he: "ר' יוסף אלבו (העיקרים)", en: "Rabbi Yosef Albo (Sefer HaIkkarim)",
+    born: 1380, died: 1444, circa: true, region: "sefarad", place: "סרגוסה, ספרד",
+    w: "יוסף אלבו", note: "פילוסוף יהודי ותלמיד רבי חסדאי קרשקש; זיקק את עיקרי האמונה.",
+    books: [{ y: 1425, he: "ספר העיקרים", en: "Sefer HaIkkarim" }],
+  },
+  {
     era: "rishonim", he: "מהרי\"ל (יעקב מולין)", en: "Maharil (Yaakov Moelin)",
     born: 1365, died: 1427, region: "ashkenaz", place: "מגנצא, אשכנז",
     w: "יעקב מולין", note: "אבי מנהגי אשכנז; בסיס לפסיקת הרמ\"א.",
@@ -651,6 +657,12 @@ const FIGURES = [
     born: 1534, died: 1572, region: "eretzIsrael", place: "ירושלים → צפת",
     w: "האר\"י", note: "אבי הקבלה הלוריאנית; נכתבה ע\"י תלמידיו.",
     books: [{ y: 1572, he: "כתבי האר\"י (עץ חיים)", en: "Lurianic Kabbalah (Etz Chaim)" }],
+  },
+  {
+    era: "acharonim", he: "הב\"ח (יואל סירקיש)", en: "Bach (Yoel Sirkis)",
+    born: 1561, died: 1640, region: "mizrachEurope", place: "לובלין → קרקוב",
+    w: "יואל סירקיש", note: "מחשובי האחרונים; פירושו על הטור, וחותנו של הט\"ז.",
+    books: [{ y: 1631, he: "בית חדש (ב\"ח) על הטור", en: "Bayit Chadash (Bach) on the Tur" }],
   },
   {
     era: "acharonim", he: "ט\"ז (דוד הלוי סגל)", en: "Taz (David HaLevi Segal)",
@@ -1288,6 +1300,7 @@ const WIKI_EN = {
   "ר\"ן": "Nissim of Gerona",
   "יצחק בר ששת": "Isaac ben Sheshet",
   "שמעון בן צמח דוראן": "Simeon ben Zemah Duran",
+  "יוסף אלבו": "Joseph Albo",
   "יעקב מולין": "Yaakov ben Moshe Levi Moelin",
   "ישראל איסרלן": "Israel Isserlein",
   "יוסף קולון": "Joseph Colon Trabotto",
@@ -1309,6 +1322,7 @@ const WIKI_EN = {
   "אלעזר אזכרי": "Elazar ben Moshe Azikri",
   "ישעיה הלוי הורוביץ": "Isaiah Horowitz",
   "האר\"י": "Isaac Luria",
+  "יואל סירקיש": "Joel Sirkis",
   "דוד הלוי סגל": "David HaLevi Segal",
   "שבתי כהן": "Shabbatai HaKohen",
   "נפתלי כ\"ץ": "Naphtali Cohen",
