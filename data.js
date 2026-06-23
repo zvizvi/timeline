@@ -20,7 +20,8 @@ const REGIONS = {
   bavel:         { he: "בבל",          en: "Babylonia",     color: "#a16207", mx: 258.8, my: 159 },
   sefarad:       { he: "ספרד",         en: "Spain",         color: "#ca8a04", mx: 38.1,  my: 118.8 },
   tzarfat:       { he: "צרפת",         en: "France",        color: "#2563eb", mx: 73.9,  my: 70.2 },
-  ashkenaz:      { he: "אשכנז",        en: "Germany",       color: "#4f46e5", mx: 93.2,  my: 60.1 },
+  ashkenaz:      { he: "אשכנז",        en: "Ashkenaz",      color: "#4f46e5", mx: 93.2,  my: 60.1 },
+  germania:      { he: "גרמניה",       en: "Germany",       color: "#e11d48", mx: 114,   my: 44 },
   provans:       { he: "פרובנס",       en: "Provence",      color: "#0d9488", mx: 75.2,  my: 97.2 },
   italia:        { he: "איטליה",       en: "Italy",         color: "#65a30d", mx: 112.6, my: 108.6 },
   tzfonAfrica:   { he: "צפון אפריקה",  en: "North Africa",  color: "#dc2626", mx: 101.6, my: 145.8 },
@@ -796,7 +797,7 @@ const FIGURES = [
     books: [{ y: 1649, he: "שני לוחות הברית (של\"ה)", en: "Shnei Luchot HaBrit" }],
   },
   {
-    era: "acharonim", he: "מלאכת שלמה (קשלמה עדני)", en: "Melechet Shlomo (Solomon Adeni)",
+    era: "acharonim", he: "מלאכת שלמה (שלמה עדני)", en: "Melechet Shlomo (Solomon Adeni)",
     born: 1567, died: 1625, circa: true, region: "teiman", place: "תימן → חברון",
     w: "שלמה עדני", note: "יליד צנעא שבתימן שעלה לארץ ישראל; מגדולי מפרשי המשנה, בעל הפירוש \"מלאכת שלמה\".",
     books: [{ y: 1620, he: "מלאכת שלמה (על המשנה)", en: "Melechet Shlomo (Mishnah commentary)" }],
@@ -875,7 +876,7 @@ const FIGURES = [
   },
   {
     era: "acharonim", he: "ר' נפתלי כ\"ץ (סמיכת חכמים)", en: "Naftali Katz (Semichat Chachamim)",
-    born: 1649, died: 1718, region: "merkazEurope", place: "פוזן → פרנקפורט",
+    born: 1649, died: 1718, region: "germania", place: "פוזן → פרנקפורט",
     w: "נפתלי כ\"ץ", note: "מקובל ופוסק; רבן של פוזן ופרנקפורט.",
     books: [{ y: 1704, he: "סמיכת חכמים", en: "Semichat Chachamim" }],
   },
@@ -911,7 +912,7 @@ const FIGURES = [
   },
   {
     era: "acharonim", he: "פני יהושע (יעקב יהושע פלק)", en: "Pnei Yehoshua (Yaakov Yehoshua Falk)",
-    born: 1680, died: 1756, region: "merkazEurope", place: "קרקוב → פרנקפורט",
+    born: 1680, died: 1756, region: "germania", place: "קרקוב → פרנקפורט",
     w: "יעקב יהושע פלק", note: "מגדולי מפרשי התלמוד; עיון מעמיק בסוגיות הש\"ס.",
     books: [{ y: 1739, he: "פני יהושע", en: "Pnei Yehoshua (Talmudic novellae)" }],
   },
@@ -953,13 +954,13 @@ const FIGURES = [
   },
   {
     era: "acharonim", he: "ר' יהונתן אייבשיץ", en: "Rabbi Jonathan Eybeschutz",
-    born: 1690, died: 1764, region: "merkazEurope", place: "פראג → אלטונה",
+    born: 1690, died: 1764, region: "germania", place: "פראג → אלטונה",
     w: "יהונתן אייבשיץ", note: "מגדולי הפלפול והפסיקה; פרשת הקמיעות והפולמוס עם היעב\"ץ.",
     books: [{ y: 1775, he: "אורים ותומים / כריתי ופליתי", en: "Urim ve-Tumim; Kreiti u-Pleiti" }],
   },
   {
     era: "acharonim", he: "ר' יעקב עמדין (יעב\"ץ)", en: "Rabbi Jacob Emden (Yavetz)",
-    born: 1697, died: 1776, region: "ashkenaz", place: "אלטונה, אשכנז",
+    born: 1697, died: 1776, region: "germania", place: "אלטונה, גרמניה",
     w: "יעקב עמדין", note: "פוסק וחוקר; נאבק בשבתאות ובפולמוס עם ר' יהונתן אייבשיץ.",
     books: [{ y: 1745, he: "שאילת יעב\"ץ / סידור היעב\"ץ", en: "She'ilat Yavetz; Siddur Yavetz" }],
   },
@@ -1181,7 +1182,7 @@ const FIGURES = [
   },
   {
     era: "acharonim", he: "הפלאה (פנחס הלוי הורוביץ)", en: "Hafla'ah (Pinchas HaLevi Horowitz)",
-    born: 1731, died: 1805, region: "merkazEurope", place: "פרנקפורט, אשכנז",
+    born: 1731, died: 1805, region: "germania", place: "פרנקפורט, גרמניה",
     w: "פנחס הורוביץ", note: "תלמיד המגיד ממזריטש ורבה של פרנקפורט; רבו של החת\"ם סופר.",
     books: [{ y: 1787, he: "ספר הפלאה (כתובות)", en: "Sefer ha-Hafla'ah" }],
   },
@@ -1247,7 +1248,7 @@ const FIGURES = [
   },
   {
     era: "acharonim", he: "רש\"ר הירש", en: "Samson Raphael Hirsch",
-    born: 1808, died: 1888, region: "ashkenaz", place: "המבורג → פרנקפורט, אשכנז",
+    born: 1808, died: 1888, region: "germania", place: "המבורג → פרנקפורט, גרמניה",
     w: "רש\"ר הירש", note: "מנהיג היהדות האורתודוקסית בגרמניה ואבי גישת \"תורה עם דרך ארץ\"; פירוש מעמיק על התורה.",
     books: [{ y: 1867, he: "פירוש רש\"ר הירש על התורה / חורב", en: "Torah commentary; Horeb" }],
   },
