@@ -554,6 +554,12 @@ const FIGURES = [
 
   // ---------- ACHARONIM ----------
   {
+    era: "acharonim", he: "ר' יעקב פולק", en: "Rabbi Yaakov Pollak",
+    born: 1465, died: 1541, circa: true, region: "mizrachEurope", place: "פראג → קרקוב",
+    w: "יעקב פולק", note: "מראשוני בוני מרכז התורה בפולין; \"בעל החילוקים\" ומאבות הפלפול.",
+    books: [],
+  },
+  {
     era: "acharonim", he: "מהר\"י בירב", en: "Maharibi (Yaakov Beirav)",
     born: 1474, died: 1546, region: "eretzIsrael", place: "ספרד → פאס → צפת",
     w: "יעקב בירב", note: "מגדולי חכמי צפת; ניסה לחדש את הסמיכה בארץ ישראל.",
@@ -1287,6 +1293,7 @@ const WIKI_EN = {
   "יוסף קולון": "Joseph Colon Trabotto",
   "יצחק אברבנאל": "Isaac Abarbanel",
   "עובדיה מברטנורא": "Obadiah of Bertinoro",
+  "יעקב פולק": "Jacob Pollak",
   "יעקב בירב": "Jacob Berab",
   "יוסף קארו": "Joseph Karo",
   "מהר\"ל": "Judah Loew ben Bezalel",
