@@ -667,6 +667,12 @@ const FIGURES = [
       { y: 1340, he: "תולדות אדם וחוה", en: "Toldot Adam ve-Chavah (practical halacha)" },
     ],
   },
+  {
+    era: "rishonim", he: "כפתור ופרח (אשתורי הפרחי)", en: "Ishtori Haparchi",
+    born: 1280, died: 1355, circa: true, region: "eretzIsrael", place: "פרובנס → בית שאן",
+    w: "אשתורי הפרחי", note: "מגורשי צרפת שעלה לארץ ישראל; חיבר את \"כפתור ופרח\" — הספר הראשון בגאוגרפיה של ארץ ישראל ובמצוות התלויות בארץ.",
+    books: [{ y: 1322, he: "כפתור ופרח", en: "Kaftor va-Ferach (geography & laws of the Land)" }],
+  },
   // -- late Rishonim (the 14th–15th-c. that previously left a gap) --
   {
     era: "rishonim", he: "ר\"ן (נסים גירונדי)", en: "Ran (Nissim of Gerona)",
@@ -1619,6 +1625,7 @@ const WIKI_EN = {
   "רלב\"ג": "Gersonides",
   "יעקב בן אשר": "Jacob ben Asher",
   "ירוחם בן משולם": "Rabbenu Yerucham",
+  "אשתורי הפרחי": "Ishtori Haparchi",
   "ר\"ן": "Nissim of Gerona",
   "יצחק בר ששת": "Isaac ben Sheshet",
   "שמעון בן צמח דוראן": "Simeon ben Zemah Duran",
