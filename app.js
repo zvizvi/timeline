@@ -449,9 +449,7 @@ function chooseMatch(i) {
   if (hiddenByEra || hiddenByRegion) { buildCols(); syncLegend(); }
   const bar = document.querySelector(`.bar[data-fig="${m.f._idx}"]`);
   if (bar) {
-    // bring it into view on BOTH axes — a far-lane bar would be off-screen
-    // horizontally if we only scrolled vertically (scrollIntoView also gets RTL right)
-    bar.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    revealBar(bar);
     clearHighlight();
     bar.classList.add("search-hit");
     void bar.offsetWidth;        // restart the pulse animation
@@ -459,6 +457,63 @@ function chooseMatch(i) {
   }
   searchBox.value = isRTL() ? m.f.he : m.f.en;
   closeMenu();
+}
+
+// Scroll a searched bar into a spot that is BOTH fully inside the chart viewport
+// AND clear of the floating map panel. Default is centered; when the map covers
+// the chart we drop the bar into the first clear band that can hold it whole —
+// above the map, then below, then to its right, then its left — so it never
+// spills off the page. Positions are computed and applied with scrollTo on
+// absolute targets derived from the current scroll, which is RTL-safe.
+function revealBar(bar) {
+  const wrap = chartWrap;
+  const wr = wrap.getBoundingClientRect();
+  const br = bar.getBoundingClientRect();
+  const sx = wrap.scrollLeft, sy = wrap.scrollTop;
+  const bw = br.width, bh = br.height, M = 16;
+  // bar position within the scroll content (independent of the current scroll)
+  const bx = br.left - wr.left + sx, by = br.top - wr.top + sy;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  // desired bar position within the viewport (relative to its top-left)
+  let tvx = (wr.width - bw) / 2, tvy = (wr.height - bh) / 2;   // centered by default
+  const mr = mapRectInView(wr);
+  if (mr) {
+    const fit = (room, size) => room >= size + 2 * M;
+    if (fit(mr.top, bh))                              // band above the map
+      tvy = Math.min(tvy, mr.top - bh - M);
+    else if (fit(wr.height - mr.bottom, bh))          // band below the map
+      tvy = Math.max(tvy, mr.bottom + M);
+    else if (fit(wr.width - mr.right, bw)) {          // to the right of the map
+      tvx = Math.max(tvx, mr.right + M);
+      tvy = clamp(tvy, M, wr.height - bh - M);
+    } else if (fit(mr.left, bw)) {                    // to the left of the map
+      tvx = Math.min(tvx, mr.left - bw - M);
+      tvy = clamp(tvy, M, wr.height - bh - M);
+    } else {                                          // map too big — most room wins
+      const rooms = [["t", mr.top], ["b", wr.height - mr.bottom],
+                     ["r", wr.width - mr.right], ["l", mr.left]].sort((a, b) => b[1] - a[1]);
+      const side = rooms[0][0];
+      if (side === "t") tvy = Math.max(M, mr.top - bh - M);
+      else if (side === "b") tvy = Math.min(wr.height - bh - M, mr.bottom + M);
+      else if (side === "r") tvx = Math.max(M, mr.right + M);
+      else tvx = Math.min(wr.width - bw - M, mr.left - bw - M);
+    }
+  }
+  // browser clamps to the valid scroll range (incl. RTL's negative range)
+  wrap.scrollTo({ left: bx - tvx, top: by - tvy, behavior: "smooth" });
+}
+// The map panel's rectangle intersected with the chart viewport (relative to the
+// viewport's top-left), or null when the map isn't shown / doesn't overlap it.
+function mapRectInView(wr) {
+  const panel = document.getElementById("map-panel");
+  if (!panel || panel.classList.contains("collapsed")) return null;
+  const m = panel.getBoundingClientRect();
+  if (!m.width) return null;
+  const top = Math.max(0, m.top - wr.top), bottom = Math.min(wr.height, m.bottom - wr.top);
+  const left = Math.max(0, m.left - wr.left), right = Math.min(wr.width, m.right - wr.left);
+  if (right <= left || bottom <= top) return null;   // no overlap with the viewport
+  return { top, bottom, left, right };
 }
 
 function closeMenu() { searchMenu.hidden = true; searchActive = -1; }
