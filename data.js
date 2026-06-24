@@ -32,7 +32,7 @@ const REGIONS = {
   mizrachEurope: { he: "מזרח אירופה",  en: "Eastern Europe",color: "#9333ea", mx: 162.2, my: 45 },
   merkazEurope:  { he: "מרכז אירופה",  en: "Central Europe",color: "#ea580c", mx: 131.5, my: 64.8 },
   iraq:          { he: "בבל (עיראק)",  en: "Iraq",          color: "#92400e", mx: 274.9, my: 177 },
-  usa:           { he: "ארצות הברית",  en: "United States", color: "#475569", mx: 14,    my: 115.8, off: true },
+  usa:           { he: "ארצות הברית",  en: "United States", color: "#475569", mx: 0,     my: 70, off: true },
 };
 
 // Migration of the Torah center: first Eretz Israel → Bavel, then Bavel westward (~942–1088 CE).
@@ -42,6 +42,275 @@ const MIGRATION = [
   { d: "M258.8,159 C 196,204 80,178 41,121",  he: "בבל ← צפון אפריקה ← ספרד" },
   { d: "M258.8,159 C 198,112 150,78 95,62",   he: "בבל ← איטליה ← אשכנז" },
 ];
+
+// Gazetteer: Hebrew place name → real-world coordinates, used to drop a precise
+// pin on the map when a figure is hovered. `app.js` parses each figure's free-text
+// `place` string ("city, region" and "origin ← destination" for moves) into one
+// or more of these keys and projects {lon,lat} into the map's 285×252 space with
+// the same regional-equirectangular projection as the coastline/era borders
+// (x = 6·cos40°·lon + 55.18 ; y = 359.9 − 6·lat). Names are matched on the city
+// token (text before the first comma / parenthesis). Off-frame spots (the New
+// World) carry precomputed {mx,my,off} instead. Region words (ארץ ישראל, בבל,
+// אשכנז …) get a representative point so coarse `place` values still land somewhere.
+const PLACES = {
+  // — Land of Israel —
+  "ירושלים": { lon: 35.21, lat: 31.78 }, "ארץ ישראל": { lon: 35.0, lat: 31.85 },
+  "צפת": { lon: 35.5, lat: 32.96 }, "טבריה": { lon: 35.53, lat: 32.79 },
+  "יבנה": { lon: 34.74, lat: 31.88 }, "לוד": { lon: 34.89, lat: 31.95 },
+  "בני ברק": { lon: 34.83, lat: 32.08 }, "עכו": { lon: 35.07, lat: 32.92 },
+  "חברון": { lon: 35.1, lat: 31.53 }, "קיסריה": { lon: 34.9, lat: 32.5 },
+  "ציפורי": { lon: 35.28, lat: 32.75 }, "פקיעין": { lon: 35.33, lat: 32.97 },
+  "מירון": { lon: 35.44, lat: 32.98 }, "מצדה": { lon: 35.35, lat: 31.31 },
+  "בית שערים": { lon: 35.13, lat: 32.7 }, "בית שאן": { lon: 35.5, lat: 32.5 },
+  "ארב": { lon: 35.32, lat: 32.92 }, "אושא": { lon: 35.1, lat: 32.8 },
+  "הגליל": { lon: 35.4, lat: 32.9 },
+  // — Babylonia / Iraq / East —
+  "בבל": { lon: 44.4, lat: 32.5 }, "סורא": { lon: 44.5, lat: 31.9 },
+  "פומבדיתא": { lon: 43.77, lat: 33.35 }, "נהרדעא": { lon: 44.3, lat: 33.1 },
+  "מחוזא": { lon: 44.6, lat: 33.1 }, "מתא מחסיא": { lon: 44.5, lat: 31.9 },
+  "נרש": { lon: 44.5, lat: 32.0 }, "הוצל": { lon: 44.4, lat: 32.0 },
+  "שבחא": { lon: 44.5, lat: 31.9 }, "פירוז שבור": { lon: 43.7, lat: 33.4 },
+  "בגדאד": { lon: 44.36, lat: 33.31 }, "דמשק": { lon: 36.3, lat: 33.5 },
+  "תימן": { lon: 44.2, lat: 19.1 }, "חצי האי ערב": { lon: 45.0, lat: 24.0 },
+  // — Turkey / Byzantium / Balkans —
+  "קושטא": { lon: 28.98, lat: 41.01 }, "קונסטנטינופול": { lon: 28.98, lat: 41.01 },
+  "ביזנטיון": { lon: 28.98, lat: 41.01 }, "האימפריה העות'מאנית": { lon: 28.98, lat: 41.01 },
+  "איזמיר": { lon: 27.14, lat: 38.42 }, "ניקיאה": { lon: 29.72, lat: 40.43 },
+  "אדריאנופול": { lon: 26.56, lat: 41.68 }, "סלוניקי": { lon: 22.94, lat: 40.64 },
+  "סרייבו": { lon: 18.41, lat: 43.85 }, "סיליסטרה": { lon: 27.26, lat: 44.12 },
+  // — Italy —
+  "רומא": { lon: 12.5, lat: 41.9 }, "איטליה": { lon: 12.5, lat: 42.5 },
+  "האימפריה הרומית": { lon: 12.5, lat: 41.9 }, "ונציה": { lon: 12.34, lat: 45.44 },
+  "ליבורנו": { lon: 10.31, lat: 43.55 }, "פירנצה": { lon: 11.26, lat: 43.77 },
+  "פדובה": { lon: 11.88, lat: 45.41 }, "פדואה": { lon: 11.88, lat: 45.41 },
+  "מנטובה": { lon: 10.79, lat: 45.16 }, "פאנו": { lon: 13.02, lat: 43.84 },
+  "פאביה": { lon: 9.16, lat: 45.19 }, "אימולה": { lon: 11.71, lat: 44.35 },
+  "פומפיי": { lon: 14.49, lat: 40.75 }, "רג'ו די קלבריה": { lon: 15.65, lat: 38.11 },
+  // — Iberia —
+  "ספרד": { lon: -3.7, lat: 40.4 }, "חצי האי האיברי": { lon: -4.0, lat: 40.0 },
+  "טולדו": { lon: -4.03, lat: 39.86 }, "ברצלונה": { lon: 2.17, lat: 41.39 },
+  "סרגוסה": { lon: -0.88, lat: 41.65 }, "גירונה": { lon: 2.82, lat: 41.98 },
+  "ג'ירונה": { lon: 2.82, lat: 41.98 }, "קורדובה": { lon: -4.78, lat: 37.89 },
+  "גרנדה": { lon: -3.6, lat: 37.18 }, "לוסנה": { lon: -4.48, lat: 37.41 },
+  "לוסינה": { lon: -4.48, lat: 37.41 }, "טודלה": { lon: -1.6, lat: 42.06 },
+  "טורטוסה": { lon: 0.52, lat: 40.81 }, "מאלגה": { lon: -4.42, lat: 36.72 },
+  "סלמנקה": { lon: -5.66, lat: 40.96 }, "זמורה": { lon: -5.74, lat: 41.5 },
+  "מיורקה": { lon: 2.65, lat: 39.57 }, "פורטוגל": { lon: -8.0, lat: 39.5 },
+  "ליסבון": { lon: -9.14, lat: 38.72 },
+  // — North Africa & Egypt —
+  "פאס": { lon: -5.0, lat: 34.04 }, "מרוקו": { lon: -6.0, lat: 32.0 },
+  "אלג'יר": { lon: 3.06, lat: 36.75 }, "תוניס": { lon: 10.18, lat: 36.8 },
+  "קירואן": { lon: 10.1, lat: 35.68 }, "מצרים": { lon: 31.0, lat: 30.0 },
+  "פוסטאט": { lon: 31.23, lat: 30.0 }, "פיום": { lon: 30.84, lat: 29.31 },
+  // — France & Provence —
+  "צרפת": { lon: 4.07, lat: 48.28 }, "פריז": { lon: 2.35, lat: 48.86 },
+  "טרואה": { lon: 4.07, lat: 48.3 }, "רמרופ": { lon: 4.3, lat: 48.52 },
+  "דמפייר": { lon: 4.7, lat: 48.4 }, "בלואה": { lon: 1.33, lat: 47.59 },
+  "קורביל": { lon: 2.48, lat: 48.61 }, "קוצי": { lon: 3.32, lat: 49.52 },
+  "פרובנס": { lon: 4.36, lat: 43.78 }, "נרבונה": { lon: 3.0, lat: 43.18 },
+  "לוניל": { lon: 4.13, lat: 43.68 }, "מרסיי": { lon: 5.37, lat: 43.3 },
+  "פרפיניאן": { lon: 2.9, lat: 42.7 }, "פושקירה": { lon: 4.27, lat: 43.69 },
+  "באניולס": { lon: 2.77, lat: 42.12 },
+  // — Ashkenaz / Germany / Low Countries / Alps —
+  "אשכנז": { lon: 7.8, lat: 50.0 }, "גרמניה": { lon: 12.8, lat: 52.65 },
+  "מרכז אירופה": { lon: 16.6, lat: 49.18 }, "חבל הריין": { lon: 7.5, lat: 50.3 },
+  "מגנצא": { lon: 8.27, lat: 50.0 }, "מיינץ": { lon: 8.27, lat: 50.0 },
+  "וורמס": { lon: 8.36, lat: 49.63 }, "וורמייזא": { lon: 8.36, lat: 49.63 },
+  "שפיירא": { lon: 8.43, lat: 49.32 }, "קלן": { lon: 6.96, lat: 50.94 },
+  "רגנסבורג": { lon: 12.1, lat: 49.0 }, "רוטנבורג": { lon: 10.18, lat: 49.38 },
+  "נירנברג": { lon: 11.08, lat: 49.45 }, "פרנקפורט": { lon: 8.68, lat: 50.11 },
+  "ברלין": { lon: 13.4, lat: 52.52 }, "אקס לה שאפל": { lon: 6.08, lat: 50.78 },
+  "אלטונה": { lon: 9.95, lat: 53.55 }, "המבורג": { lon: 9.99, lat: 53.55 },
+  "אמסטרדם": { lon: 4.9, lat: 52.37 }, "באזל": { lon: 7.59, lat: 47.56 },
+  // — Austria-Hungary / Bohemia / Moravia / Slovakia —
+  "וינה": { lon: 16.37, lat: 48.21 }, "וינר נוישטאדט": { lon: 16.24, lat: 47.81 },
+  "אייזנשטט": { lon: 16.52, lat: 47.85 }, "פראג": { lon: 14.42, lat: 50.08 },
+  "פרוסטיץ": { lon: 17.11, lat: 49.47 }, "בוסקוביץ": { lon: 16.66, lat: 49.49 },
+  "הולשוב": { lon: 17.58, lat: 49.33 }, "פרשבורג": { lon: 17.11, lat: 48.15 },
+  "סלובקיה": { lon: 19.5, lat: 48.7 }, "מונקאטש": { lon: 22.72, lat: 48.44 },
+  "אונגוואר": { lon: 22.3, lat: 48.62 }, "אוהל": { lon: 21.66, lat: 48.4 },
+  "סאטמר": { lon: 22.88, lat: 47.79 },
+  // — Poland —
+  "פולין": { lon: 20.0, lat: 51.5 }, "קרקוב": { lon: 19.94, lat: 50.06 },
+  "לובלין": { lon: 22.57, lat: 51.25 }, "פוזן": { lon: 16.93, lat: 52.41 },
+  "ליסא": { lon: 16.58, lat: 51.84 }, "קאליש": { lon: 18.08, lat: 51.76 },
+  "גור": { lon: 21.21, lat: 51.98 }, "קוצק": { lon: 22.45, lat: 51.64 },
+  "פשיסחה": { lon: 20.28, lat: 51.36 }, "קוז'ניץ": { lon: 21.55, lat: 51.58 },
+  "אפטא": { lon: 21.43, lat: 50.8 }, "אניפולי": { lon: 21.85, lat: 50.88 },
+  "סוכטשוב": { lon: 20.23, lat: 52.23 }, "טיקטין": { lon: 22.77, lat: 53.2 },
+  "ביאליסטוק": { lon: 23.16, lat: 53.13 }, "אוסטרופול": { lon: 27.6, lat: 49.8 },
+  "ראדין": { lon: 25.0, lat: 53.86 },
+  // — Galicia —
+  "לבוב": { lon: 24.03, lat: 49.84 }, "ברודי": { lon: 25.15, lat: 50.08 },
+  "צאנז": { lon: 20.7, lat: 49.62 }, "בעלזא": { lon: 24.0, lat: 50.38 },
+  "ליז'נסק": { lon: 22.42, lat: 50.27 }, "רופשיץ": { lon: 21.6, lat: 50.05 },
+  "דינוב": { lon: 22.23, lat: 49.82 }, "פרמישלאן": { lon: 24.5, lat: 49.2 },
+  "קומרנה": { lon: 23.7, lat: 49.63 }, "קוסוב": { lon: 25.1, lat: 48.31 },
+  "זלוטשוב": { lon: 24.9, lat: 49.8 }, "זידיטשוב": { lon: 24.14, lat: 49.38 },
+  "טרנופול": { lon: 25.6, lat: 49.55 }, "סטרי": { lon: 23.86, lat: 49.26 },
+  "סדיגורה": { lon: 25.95, lat: 48.32 },
+  // — Lithuania / Belarus —
+  "ליטא": { lon: 24.0, lat: 55.0 }, "וילנה": { lon: 25.28, lat: 54.69 },
+  "וולוז'ין": { lon: 26.53, lat: 54.08 }, "בריסק": { lon: 23.66, lat: 52.1 },
+  "סלובודקה": { lon: 23.9, lat: 54.9 }, "נובהרדוק": { lon: 25.83, lat: 53.6 },
+  "טלז": { lon: 22.25, lat: 55.98 }, "קלם": { lon: 22.65, lat: 55.63 },
+  "קרלין": { lon: 26.1, lat: 52.12 }, "קמניץ": { lon: 23.8, lat: 52.4 },
+  "סלוצק": { lon: 27.55, lat: 53.02 }, "אוטיאן": { lon: 25.6, lat: 55.5 },
+  "הורודנא": { lon: 23.83, lat: 53.68 }, "גרודנא": { lon: 23.83, lat: 53.68 },
+  "בלארוס": { lon: 27.95, lat: 53.7 }, "אוסטרהא": { lon: 26.5, lat: 50.33 },
+  "דובנא": { lon: 25.74, lat: 50.4 }, "לאדי": { lon: 30.8, lat: 54.6 },
+  "ויטבסק": { lon: 30.2, lat: 55.19 }, "לטביה": { lon: 24.6, lat: 56.95 },
+  // — Ukraine —
+  "אוקראינה": { lon: 30.5, lat: 50.45 }, "פודוליה": { lon: 27.0, lat: 48.8 },
+  "תחום המושב": { lon: 28.0, lat: 52.0 }, "רוסיה": { lon: 30.0, lat: 55.0 },
+  "מז'יבוז'": { lon: 27.4, lat: 49.43 }, "מזריטש": { lon: 27.5, lat: 50.13 },
+  "פולנאה": { lon: 27.5, lat: 50.13 }, "ברדיטשוב": { lon: 28.6, lat: 49.9 },
+  "אומן": { lon: 30.22, lat: 48.75 }, "ברסלב": { lon: 28.6, lat: 48.82 },
+  "טשרנוביל": { lon: 30.06, lat: 51.27 }, "קוריץ": { lon: 27.16, lat: 50.62 },
+  "רוז'ין": { lon: 29.2, lat: 49.7 }, "הורנשטייפל": { lon: 30.4, lat: 50.8 },
+  // — England / broad Europe —
+  "אנגליה": { lon: -0.13, lat: 51.5 }, "לונדון": { lon: -0.13, lat: 51.5 },
+  "אירופה": { lon: 15.0, lat: 50.0 }, "הים התיכון": { lon: 18.0, lat: 35.0 },
+  // — New World (off the map frame) —
+  "ניו יורק": { mx: 0, my: 70, off: true },
+};
+
+// Places that name a whole region/country rather than a single town: the pin
+// only marks a representative center, so `app.js` rings it to flag the imprecision.
+const APPROX_PLACES = new Set([
+  "ארץ ישראל", "הגליל", "בבל", "תימן", "חצי האי ערב",
+  "ספרד", "חצי האי האיברי", "פורטוגל", "מרוקו",
+  "צרפת", "פרובנס", "איטליה", "האימפריה הרומית", "האימפריה העות'מאנית",
+  "אשכנז", "גרמניה", "מרכז אירופה", "חבל הריין",
+  "פולין", "סלובקיה", "ליטא", "בלארוס", "רוסיה", "תחום המושב", "לטביה",
+  "אוקראינה", "פודוליה", "אנגליה", "אירופה", "הים התיכון",
+]);
+
+// English labels for the on-map pins, keyed by the Hebrew PLACES name. Used when
+// the UI is in English (the Hebrew name shows otherwise). Any place missing here
+// falls back to its Hebrew name. Keep keys in sync with PLACES.
+const PLACES_EN = {
+  // — Land of Israel —
+  "ירושלים": "Jerusalem", "ארץ ישראל": "Land of Israel",
+  "צפת": "Safed", "טבריה": "Tiberias",
+  "יבנה": "Yavne", "לוד": "Lod",
+  "בני ברק": "Bnei Brak", "עכו": "Acre",
+  "חברון": "Hebron", "קיסריה": "Caesarea",
+  "ציפורי": "Sepphoris", "פקיעין": "Peki'in",
+  "מירון": "Meron", "מצדה": "Masada",
+  "בית שערים": "Beit She'arim", "בית שאן": "Beit She'an",
+  "ארב": "Arav", "אושא": "Usha",
+  "הגליל": "Galilee",
+  // — Babylonia / Iraq / East —
+  "בבל": "Babylonia", "סורא": "Sura",
+  "פומבדיתא": "Pumbedita", "נהרדעא": "Nehardea",
+  "מחוזא": "Mehoza", "מתא מחסיא": "Mata Mehasya",
+  "נרש": "Naresh", "הוצל": "Hutzal",
+  "שבחא": "Shabcha", "פירוז שבור": "Piruz-Shabur",
+  "בגדאד": "Baghdad", "דמשק": "Damascus",
+  "תימן": "Yemen", "חצי האי ערב": "Arabian Peninsula",
+  // — Turkey / Byzantium / Balkans —
+  "קושטא": "Constantinople", "קונסטנטינופול": "Constantinople",
+  "ביזנטיון": "Byzantium", "האימפריה העות'מאנית": "Ottoman Empire",
+  "איזמיר": "Izmir", "ניקיאה": "Nicaea",
+  "אדריאנופול": "Adrianople", "סלוניקי": "Salonika",
+  "סרייבו": "Sarajevo", "סיליסטרה": "Silistra",
+  // — Italy —
+  "רומא": "Rome", "איטליה": "Italy",
+  "האימפריה הרומית": "Roman Empire", "ונציה": "Venice",
+  "ליבורנו": "Livorno", "פירנצה": "Florence",
+  "פדובה": "Padua", "פדואה": "Padua",
+  "מנטובה": "Mantua", "פאנו": "Fano",
+  "פאביה": "Pavia", "אימולה": "Imola",
+  "פומפיי": "Pompeii", "רג'ו די קלבריה": "Reggio Calabria",
+  // — Iberia —
+  "ספרד": "Spain", "חצי האי האיברי": "Iberian Peninsula",
+  "טולדו": "Toledo", "ברצלונה": "Barcelona",
+  "סרגוסה": "Zaragoza", "גירונה": "Girona",
+  "ג'ירונה": "Girona", "קורדובה": "Córdoba",
+  "גרנדה": "Granada", "לוסנה": "Lucena",
+  "לוסינה": "Lucena", "טודלה": "Tudela",
+  "טורטוסה": "Tortosa", "מאלגה": "Málaga",
+  "סלמנקה": "Salamanca", "זמורה": "Zamora",
+  "מיורקה": "Majorca", "פורטוגל": "Portugal",
+  "ליסבון": "Lisbon",
+  // — North Africa & Egypt —
+  "פאס": "Fez", "מרוקו": "Morocco",
+  "אלג'יר": "Algiers", "תוניס": "Tunis",
+  "קירואן": "Kairouan", "מצרים": "Egypt",
+  "פוסטאט": "Fustat", "פיום": "Fayyum",
+  // — France & Provence —
+  "צרפת": "France", "פריז": "Paris",
+  "טרואה": "Troyes", "רמרופ": "Ramerupt",
+  "דמפייר": "Dampierre", "בלואה": "Blois",
+  "קורביל": "Corbeil", "קוצי": "Coucy",
+  "פרובנס": "Provence", "נרבונה": "Narbonne",
+  "לוניל": "Lunel", "מרסיי": "Marseille",
+  "פרפיניאן": "Perpignan", "פושקירה": "Posquières",
+  "באניולס": "Bagnols",
+  // — Ashkenaz / Germany / Low Countries / Alps —
+  "אשכנז": "Ashkenaz", "גרמניה": "Germany",
+  "מרכז אירופה": "Central Europe", "חבל הריין": "Rhineland",
+  "מגנצא": "Mainz", "מיינץ": "Mainz",
+  "וורמס": "Worms", "וורמייזא": "Worms",
+  "שפיירא": "Speyer", "קלן": "Cologne",
+  "רגנסבורג": "Regensburg", "רוטנבורג": "Rothenburg",
+  "נירנברג": "Nuremberg", "פרנקפורט": "Frankfurt",
+  "ברלין": "Berlin", "אקס לה שאפל": "Aachen",
+  "אלטונה": "Altona", "המבורג": "Hamburg",
+  "אמסטרדם": "Amsterdam", "באזל": "Basel",
+  // — Austria-Hungary / Bohemia / Moravia / Slovakia —
+  "וינה": "Vienna", "וינר נוישטאדט": "Wiener Neustadt",
+  "אייזנשטט": "Eisenstadt", "פראג": "Prague",
+  "פרוסטיץ": "Prostějov", "בוסקוביץ": "Boskovice",
+  "הולשוב": "Holešov", "פרשבורג": "Pressburg",
+  "סלובקיה": "Slovakia", "מונקאטש": "Munkács",
+  "אונגוואר": "Ungvár", "אוהל": "Ujhely",
+  "סאטמר": "Satmar",
+  // — Poland —
+  "פולין": "Poland", "קרקוב": "Kraków",
+  "לובלין": "Lublin", "פוזן": "Poznań",
+  "ליסא": "Lissa", "קאליש": "Kalisz",
+  "גור": "Ger", "קוצק": "Kotzk",
+  "פשיסחה": "Przysucha", "קוז'ניץ": "Kozhnitz",
+  "אפטא": "Apta", "אניפולי": "Hanipol",
+  "סוכטשוב": "Sochaczew", "טיקטין": "Tiktin",
+  "ביאליסטוק": "Białystok", "אוסטרופול": "Ostropol",
+  "ראדין": "Radin",
+  // — Galicia —
+  "לבוב": "Lviv", "ברודי": "Brody",
+  "צאנז": "Sanz", "בעלזא": "Belz",
+  "ליז'נסק": "Lizhensk", "רופשיץ": "Ropshitz",
+  "דינוב": "Dynów", "פרמישלאן": "Premishlan",
+  "קומרנה": "Komarno", "קוסוב": "Kosov",
+  "זלוטשוב": "Zolochiv", "זידיטשוב": "Zhydachiv",
+  "טרנופול": "Ternopil", "סטרי": "Stryi",
+  "סדיגורה": "Sadigura",
+  // — Lithuania / Belarus —
+  "ליטא": "Lithuania", "וילנה": "Vilna",
+  "וולוז'ין": "Volozhin", "בריסק": "Brisk",
+  "סלובודקה": "Slabodka", "נובהרדוק": "Navahrudak",
+  "טלז": "Telz", "קלם": "Kelm",
+  "קרלין": "Karlin", "קמניץ": "Kamenitz",
+  "סלוצק": "Slutsk", "אוטיאן": "Utena",
+  "הורודנא": "Grodno", "גרודנא": "Grodno",
+  "בלארוס": "Belarus", "אוסטרהא": "Ostroh",
+  "דובנא": "Dubno", "לאדי": "Liadi",
+  "ויטבסק": "Vitebsk", "לטביה": "Latvia",
+  // — Ukraine —
+  "אוקראינה": "Ukraine", "פודוליה": "Podolia",
+  "תחום המושב": "Pale of Settlement", "רוסיה": "Russia",
+  "מז'יבוז'": "Mezhibozh", "מזריטש": "Mezeritch",
+  "פולנאה": "Polonne", "ברדיטשוב": "Berdychiv",
+  "אומן": "Uman", "ברסלב": "Breslov",
+  "טשרנוביל": "Chernobyl", "קוריץ": "Korets",
+  "רוז'ין": "Ruzhin", "הורנשטייפל": "Hornostaypil",
+  // — England / broad Europe —
+  "אנגליה": "England", "לונדון": "London",
+  "אירופה": "Europe", "הים התיכון": "Mediterranean",
+  // — New World (off the map frame) —
+  "ניו יורק": "New York",
+};
 
 // Each figure: born/died in CE. `circa` flags approximate dates.
 const FIGURES = [

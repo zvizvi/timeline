@@ -514,14 +514,21 @@ function buildMap() {
 
   const g = document.getElementById("map-dots");
   g.innerHTML = Object.entries(REGIONS).map(([key, r]) => {
-    const arrow = r.off
-      ? `<text class="moff" x="${r.mx - 6}" y="${r.my + 1.4}" text-anchor="middle">←</text>`
-      : "";
-    const ly = r.my - 6.5;
+    const label = isRTL() ? r.he : r.en;
+    if (r.off) {
+      // Off-frame marker (the New World, far west of this map): the dot is pinned
+      // to the very left edge and half-clipped by the svg frame, with a bold "«"
+      // just inside it — so it reads as "off the map, across the ocean that way"
+      // rather than a stray dot floating in the Atlantic. Label rides to its right.
+      return `<g class="mdot off-dot" data-region="${key}">
+         <circle cx="${r.mx}" cy="${r.my}" r="4.2" fill="${r.color}" stroke="#fff" stroke-width="1.3"></circle>
+         <text class="moff" x="${r.mx + 13}" y="${r.my + 5}" text-anchor="middle">«</text>
+         <text class="mlabel" x="${r.mx + 42}" y="${r.my + 3.4}" text-anchor="middle">${label}</text>
+       </g>`;
+    }
     return `<g class="mdot" data-region="${key}">
        <circle cx="${r.mx}" cy="${r.my}" r="4.2" fill="${r.color}" stroke="#fff" stroke-width="1.3"></circle>
-       ${arrow}
-       <text class="mlabel" x="${r.mx}" y="${ly}" text-anchor="middle">${isRTL() ? r.he : r.en}</text>
+       <text class="mlabel" x="${r.mx}" y="${r.my - 6.5}" text-anchor="middle">${label}</text>
      </g>`;
   }).join("");
   g.querySelectorAll(".mdot").forEach((el) =>
@@ -640,21 +647,102 @@ function clearBorders() {
   document.getElementById("map-borders").innerHTML = "";
 }
 
-// ---------- hover pin (one sage's location) ----------
-// On figure hover, drop a pin at the sage's region on the map and hide the
-// colored region-filter dots so the single location reads clearly.
+// ---------- hover pin (a sage's exact location, or his move) ----------
+// On figure hover we resolve the free-text `place` into precise map points via
+// the PLACES gazetteer, drop a teardrop pin at where he ended up, mark earlier
+// stops with a small ring, draw an arrow along the move, and hide the colored
+// region-filter dots so the location reads cleanly.
+
+// Same regional-equirectangular projection as the coastline and era borders.
+const MAP_K = 6 * Math.cos(40 * Math.PI / 180);   // 6·cos40° ≈ 4.596
+function projectPlace(p) {
+  if (!p) return null;
+  if (p.off) return { x: p.mx, y: p.my, off: true };
+  return { x: MAP_K * p.lon + 55.18, y: 359.9 - 6 * p.lat };
+}
+// Resolve one `place` token ("city, region (aside)") to a gazetteer entry plus
+// the name we actually matched on (for the on-map label).
+function resolvePlace(token) {
+  const t = token.replace(/\([^)]*\)/g, "").trim();   // drop parentheticals
+  const tries = [t, t.split(",")[0].trim(),           // whole token, then city
+    t.split(",")[0].split(/ ו/)[0].trim(),            // "ספרד וצפון אפריקה" → "ספרד"
+    (t.split(",")[1] || "").trim()];                  // fall back to the region word
+  for (const name of tries)
+    if (name && PLACES[name]) return { p: PLACES[name], name };
+  return null;
+}
+// Ordered list of distinct map points for a figure (origin → … → destination),
+// each as {x,y,name,approx,off}. `place` uses "←" for a move; the rightmost
+// (first) segment is the origin.
+function figurePoints(f) {
+  const segs = (f.place || "").split("←").map((s) => s.trim()).filter(Boolean);
+  const out = [];
+  for (const seg of segs) {
+    const hit = resolvePlace(seg);
+    const pt = hit && projectPlace(hit.p);
+    if (!pt) continue;
+    pt.name = hit.name;
+    pt.nameEn = PLACES_EN[hit.name] || hit.name;
+    pt.approx = APPROX_PLACES.has(hit.name);
+    if (!out.length || Math.hypot(pt.x - out[out.length - 1].x, pt.y - out[out.length - 1].y) > 0.5)
+      out.push(pt);
+  }
+  // last resort: the figure's region center, so every sage still gets a pin
+  if (!out.length) {
+    const r = REGIONS[f.region];
+    if (r) out.push({ x: r.mx, y: r.my, off: r.off, name: r.he, nameEn: r.en, approx: true });
+  }
+  return out;
+}
+function teardrop(x, y, color) {
+  return `<ellipse class="pin-shadow" cx="${x}" cy="${y}" rx="3.4" ry="1.2"/>` +
+    `<path class="pin-body" d="M${x},${y} C${x - 6.8},${y - 9} ${x - 6.8},${y - 15.5} ${x},${y - 17} ` +
+    `C${x + 6.8},${y - 15.5} ${x + 6.8},${y - 9} ${x},${y} Z" fill="${color}"/>` +
+    `<circle class="pin-eye" cx="${x}" cy="${y - 10.5}" r="2.7" fill="#fff"/>`;
+}
+// A gently bowed arrow from a→b, stopping short of b so the pin tip stays clear.
+function moveArrow(a, b, color) {
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len;
+  const sx = a.x + ux * 4, sy = a.y + uy * 4;          // leave the origin ring
+  const ex = b.x - ux * 5, ey = b.y - uy * 5;          // stop just shy of the dest tip
+  const mx = (sx + ex) / 2 - (ey - sy) * 0.18;         // perpendicular bow
+  const my = (sy + ey) / 2 + (ex - sx) * 0.18;
+  // arrowhead at the end, aimed along the final tangent
+  const tx = ex - mx, ty = ey - my, tl = Math.hypot(tx, ty) || 1;
+  const hx = tx / tl, hy = ty / tl, h = 4.5, w = 2.6;
+  const head = `M${ex},${ey} L${ex - hx * h - hy * w},${ey - hy * h + hx * w} ` +
+    `L${ex - hx * h + hy * w},${ey - hy * h - hx * w} Z`;
+  return `<path class="pin-move" d="M${sx},${sy} Q${mx},${my} ${ex},${ey}" stroke="${color}" fill="none"/>` +
+    `<path class="pin-move-head" d="${head}" fill="${color}"/>`;
+}
+// Name tag above a point. Destination tags ride above the teardrop body, origin
+// tags sit just over the ring; an approximate point gets a dashed extent circle.
+function pinLabel(p, isDest, color) {
+  let s = "";
+  if (p.approx)
+    s += `<circle class="pin-approx" cx="${p.x}" cy="${p.y}" r="11" stroke="${color}"/>`;
+  const ly = isDest ? p.y - 21 : p.y - (p.approx ? 14 : 7);
+  const name = isRTL() ? p.name : (p.nameEn || p.name);
+  s += `<text class="pin-label${isDest ? " dest" : ""}" x="${p.x}" y="${ly}">${name}</text>`;
+  return s;
+}
 function showPin(f) {
-  const r = REGIONS[f.region];
-  if (!r) return;
-  const x = r.mx, y = r.my;
+  const pts = figurePoints(f);
+  if (!pts.length) return;
+  const color = (REGIONS[f.region] && REGIONS[f.region].color) || "#444";
+  const dest = pts[pts.length - 1];
+  let svg = "";
+  for (let i = 0; i < pts.length - 1; i++) svg += moveArrow(pts[i], pts[i + 1], color);
+  for (let i = 0; i < pts.length - 1; i++)               // earlier stops: small rings
+    svg += `<circle class="pin-origin" cx="${pts[i].x}" cy="${pts[i].y}" r="2.8" fill="${color}"/>`;
+  svg += teardrop(dest.x, dest.y, color);
+  for (let i = 0; i < pts.length - 1; i++) svg += pinLabel(pts[i], false, color);
+  svg += pinLabel(dest, true, color);
   const g = document.getElementById("map-pin");
-  // animate the whole group around the pin's tip (reliable across browsers)
-  g.style.transformOrigin = `${x}px ${y}px`;
-  g.innerHTML =
-    `<ellipse class="pin-shadow" cx="${x}" cy="${y}" rx="4.2" ry="1.5"/>` +
-    `<path class="pin-body" d="M${x},${y} C${x - 8.5},${y - 11} ${x - 8.5},${y - 19} ${x},${y - 21} ` +
-    `C${x + 8.5},${y - 19} ${x + 8.5},${y - 11} ${x},${y} Z" fill="${r.color}"/>` +
-    `<circle class="pin-eye" cx="${x}" cy="${y - 13}" r="3.4" fill="#fff"/>`;
+  // animate the whole group around the destination pin's tip (reliable across browsers)
+  g.style.transformOrigin = `${dest.x}px ${dest.y}px`;
+  g.innerHTML = svg;
   g.style.animation = "none";
   void g.getBoundingClientRect();        // reflow so the drop replays on every hover
   g.style.animation = "";
