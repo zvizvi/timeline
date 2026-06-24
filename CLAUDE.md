@@ -22,6 +22,16 @@ Live at <https://yossizahn.github.io/timeline/>.
 | `app.js` | Rendering & interaction. Reads CSS vars for layout; lane-packing; tooltip; drawer; map; region filter; events rail. |
 | `style.css` | Theming via CSS custom properties in `:root` (colors, `--start-year`, `--end-year`, `--px-year`, `--evt-gutter`, `--axis-w`, `--lane-w`). |
 | `map.js` | `LAND_PATH` — generated coastline (Natural Earth 110m land, regional equirectangular projection, viewBox `285×252`). Do not hand-edit. |
+| `borders/` | Per-year political-border slices (`<year>.json`) + `index.json` (sorted slice years). Loaded on demand for the era-borders overlay shown when hovering a sage; `app.js` snaps the figure's date to the nearest slice. **GENERATED** by `tools/borders/` — don't hand-edit. |
+| `tools/borders/` | Offline pipeline that produces `borders/` (`fetch.sh` → `clip.py` → `generate.py`, with `names.json` for label placement). See its `README.md`. |
+
+## Map interaction (`app.js`, `map.js`)
+
+- The map panel is **resizable** (drag the `.map-resize` grip) and **draggable** on desktop; size
+  and position persist in `localStorage` (`mapWidth`, `mapPos`).
+- Hovering a sage drops an **exact city pin** (PLACES gazetteer) with an approximate ring + move
+  arrow, and paints the **era political-border overlay** for that figure's date.
+- Map labels follow the **UI language** (Hebrew/English); the toggle persists in `localStorage` (`lang`).
 
 ## Data model (`data.js`)
 
