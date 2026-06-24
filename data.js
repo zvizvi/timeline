@@ -1995,7 +1995,7 @@ const EVENTS = [
   { y: 325,  he: "ועידת ניקיאה", en: "First Council of Nicaea", place: "ניקיאה", w: "ועידת ניקיאה" },
   { y: 359,  he: "קביעת לוח השנה (הלל נשיאה)", en: "Hillel II fixes the Hebrew calendar", place: "ארץ ישראל", w: "הלל נשיאה", j: true },
   { y: 375,  he: "נדידת העמים — פלישות השבטים הברבריים", en: "Migration Period; Barbarian invasions", place: "אירופה", w: "נדידת העמים" },
-  { y: 400,  he: "חתימת התלמוד הירושלמי", en: "Jerusalem Talmud redacted", place: "טבריה, ארץ ישראל", w: "תלמוד ירושלמי", j: true },
+  { y: 400,  he: "חתימת התלמוד הירושלמי", en: "Jerusalem Talmud sealed", place: "טבריה, ארץ ישראל", w: "תלמוד ירושלמי", j: true },
   { y: 476,  he: "נפילת האימפריה הרומית המערבית", en: "Fall of the Western Roman Empire", place: "רומא", w: "שקיעת האימפריה הרומית" },
   { y: 500,  he: "חתימת התלמוד הבבלי", en: "Babylonian Talmud sealed", place: "בבל", w: "תלמוד בבלי", j: true },
   { y: 529,  he: "קודקס יוסטיניאנוס", en: "Justinian's Code", place: "ביזנטיון", w: "קורפוס יוריס קיוויליס" },
