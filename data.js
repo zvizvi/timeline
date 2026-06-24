@@ -1264,6 +1264,12 @@ const FIGURES = [
     books: [{ y: 1612, he: "חידושי הלכות ואגדות", en: "Chiddushei Halachot va-Aggadot" }],
   },
   {
+    era: "acharonim", he: "כלי יקר (שלמה אפרים מלונטשיץ)", en: "Kli Yakar (Shlomo Ephraim Luntschitz)",
+    born: 1550, died: 1619, region: "merkazEurope", place: "פראג ← לבוב",
+    w: "שלמה אפרים מלונטשיץ", note: "ראש ישיבה בלבוב ואב\"ד פראג; דרשן ופרשן, בעל הפירוש הנודע על התורה.",
+    books: [{ y: 1602, he: "כלי יקר (על התורה)", en: "Kli Yakar (Torah commentary)" }],
+  },
+  {
     era: "acharonim", he: "השל\"ה הקדוש (ישעיה הורוביץ)", en: "Shelah (Isaiah Horowitz)",
     born: 1565, died: 1630, region: "eretzIsrael", place: "פראג ← ירושלים",
     w: "ישעיה הלוי הורוביץ", note: "מקובל ופוסק; חיבורו רב-ההשפעה משלב הלכה, מוסר וקבלה.",
