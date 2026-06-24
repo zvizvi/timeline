@@ -169,6 +169,10 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .evt-toggle input:focus-visible + .switch {
   outline: 2px solid var(--event); outline-offset: 2px;
 }
+/* the compact-view toggle reuses the events switch, but with a neutral ink "on"
+   colour so two purple switches don't sit side by side */
+.compact-toggle input:checked + .switch { background: var(--ink); }
+.compact-toggle input:focus-visible + .switch { outline-color: var(--ink); }
 
 /* active region filter — a floating chip over the chart (NOT in the topbar, so
    selecting/clearing regions never reflows the bar). Centred at the top edge,
@@ -384,6 +388,53 @@ body.col-resizing { cursor: col-resize; user-select: none; }
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent);
 }
 .book:hover { transform: translateY(-50%) scale(1.45); }
+
+/* ---------- compact (local-density) view ----------
+   In compact mode each bar's width is set by how crowded its own years are, so
+   the detail tier is per-bar: wide (sparse) bars keep everything, and as a bar
+   narrows it sheds the region chip (dens-mid), then the years (dens-min), then the
+   name rotates to run down the bar (dens-vert). The book rail and its markers are
+   dropped throughout — the width is too precious; books stay in the hover tooltip. */
+.bar.compact {
+  --rail-w: 0;
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.bar.compact::before { display: none; }     /* no rail divider */
+.bar.compact .book { display: none; }        /* no book markers (still in the tooltip) */
+.bar.compact .name { font-size: 13px; }
+.bar.compact .yrs { margin-top: 2px; }
+.bar.compact .region { margin-top: 5px; }
+
+/* mid: name + years, region chip dropped */
+.bar.dens-mid { padding: 5px 8px; }
+.bar.dens-mid .name { font-size: 12.5px; }
+.bar.dens-mid .region { display: none; }
+
+/* min: horizontal name only — years and region dropped, everything tightened */
+.bar.dens-min { padding: 4px 6px; }
+.bar.dens-min .name { font-size: 12px; line-height: 1.16; letter-spacing: -0.3px; }
+.bar.dens-min .yrs,
+.bar.dens-min .region { display: none; }
+
+/* vert: lane too slim for a horizontal name — rotate the name to run DOWN the bar,
+   starting at the TOP of the bar with the first letter, tilted for a left head-turn
+   (transform-origin + translateX(-100%) anchors it at the top without needing to
+   know the name's length). Years/region drop; the tooltip still has every detail. */
+.bar.dens-vert { padding: 0; }
+.bar.dens-vert .name {
+  position: absolute; top: 8px; left: calc(50% - 0.5em);
+  white-space: nowrap; max-width: none;
+  font-size: 12px; line-height: 1; letter-spacing: 0;
+  transform-origin: top left;
+  transform: rotate(-90deg) translateX(-100%);
+}
+[dir="ltr"] .bar.dens-vert .name {
+  left: calc(50% + 0.5em);
+  transform: rotate(90deg);
+}
+.bar.dens-vert .yrs,
+.bar.dens-vert .region { display: none; }
 
 .hint {
   text-align: center; color: var(--muted); font-size: 12.5px;

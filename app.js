@@ -5,6 +5,7 @@ const START = parseInt(css.getPropertyValue("--start-year")) || 680;
 const END = parseInt(css.getPropertyValue("--end-year")) || 2000;
 const LANE_W = parseFloat(css.getPropertyValue("--lane-w")) || 158;
 const LANE_GAP = parseFloat(css.getPropertyValue("--lane-gap")) || 12;
+const COMPACT_MIN_LANE = 30; // px; the floor for a lane in compact mode (names go vertical here)
 const HEB_OFFSET = 3760; // CE -> Hebrew year (approx.)
 const MIN_BAR_H = 88;    // px; short lifespans get a readable minimum (name + years + region chip)
 const MIN_YEARS = MIN_BAR_H / PX;
@@ -35,6 +36,8 @@ const I18N = {
     yearHeb: "שנה עברית",
     yearSec: "שנה לועזית",
     events: "אירועים היסטוריים",
+    compact: "תצוגה קומפקטית",
+    compactHint: "כיווץ העמודות לרוחב המסך — ככל שמצטופף, מוצגים פחות פרטים, עד לשם בלבד",
     hint: "גלול מעלה ומטה לאורך הדורות · רחף לפרטים · לחצו על שם או אירוע לערך בוויקיפדיה · לחצו על תווית אזור כדי לסנן לפי מרכז תורה",
     mapTitle: "מפה",
     mapHint: "לחצו על אזור כדי לסנן",
@@ -84,6 +87,8 @@ const I18N = {
     yearHeb: "Hebrew year",
     yearSec: "Common era",
     events: "Historical events",
+    compact: "Compact view",
+    compactHint: "Shrink the columns to fit the screen — as they tighten, detail drops away, down to the name alone",
     hint: "Scroll up and down through the generations · hover for details · click a name or event for its Wikipedia article · click a region label to filter by Torah center",
     mapTitle: "Map",
     mapHint: "Click a region to filter",
@@ -200,6 +205,75 @@ function packLanes(items) {
     it._lane = lane;
   });
   return { items: sorted, laneCount: Math.max(laneEnds.length, 1) };
+}
+
+// ---------- compact (local-density) packing ----------
+// Unlike packLanes (one width for the whole chart), this gives every figure a
+// width set by how crowded its OWN stretch of time is: where few sages overlap a
+// bar stays full width, where many overlap it shrinks — only as far as the local
+// peak demands, down to a floor. So sparse centuries read in full while the dense
+// clusters fan into slim (eventually vertical-name) columns. Bars are then placed
+// by leftmost-fit, which keeps them from overlapping at any year.
+function packCompact(items, availW) {
+  const sorted = [...items].sort((a, b) => a.born - b.born);
+  const span = (it) => [it.born, Math.max(it.died, it.born + MIN_YEARS)];
+
+  // concurrency timeline: how many sages are alive at once across the years.
+  // [born,end) is half-open, so an end exactly meeting a born doesn't overlap —
+  // process -1 before +1 at equal years.
+  const ev = [];
+  sorted.forEach((it) => { const [b, e] = span(it); ev.push([b, 1], [e, -1]); });
+  ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const segs = [];                       // {t0,t1,level} constant-concurrency bands
+  let level = 0;
+  for (let i = 0; i < ev.length; i++) {
+    level += ev[i][1];
+    const t0 = ev[i][0], t1 = i + 1 < ev.length ? ev[i + 1][0] : t0;
+    if (t1 > t0) segs.push({ t0, t1, level });
+  }
+  // local peak for a figure = the busiest instant within its own lifetime
+  const localPeak = ([b, e]) => {
+    let pk = 1;
+    for (const s of segs) if (s.t1 > b && s.t0 < e && s.level > pk) pk = s.level;
+    return pk;
+  };
+
+  // leftmost-fit placement using each figure's local width (slot = width + gap)
+  const rects = [];
+  sorted.forEach((f) => {
+    const sp = span(f);
+    const peak = localPeak(sp);
+    const slot = Math.max(COMPACT_MIN_LANE, Math.min(LANE_W, availW / peak));
+    const gap = slot < 56 ? 4 : slot < 100 ? 6 : LANE_GAP;
+    // obstacles: already-placed bars whose lifetime overlaps this one (in years)
+    const obst = rects
+      .filter((p) => p.e > sp[0] && p.b < sp[1])
+      .map((p) => [p.x, p.x + p.slot])
+      .sort((a, b) => a[0] - b[0]);
+    let x = 0;
+    for (const [o0, o1] of obst) {
+      if (x + slot <= o0) break;         // fits in the gap before this obstacle
+      if (o1 > x) x = o1;                // otherwise slide past it
+    }
+    rects.push({ f, x, slot, gap, b: sp[0], e: sp[1] });
+  });
+
+  // expand-to-fill: a bar sized for its busiest instant can still sit beside empty
+  // space, because its neighbours thinned out elsewhere in its life. Grow each bar
+  // toward the interior to fill the gap to its nearest still-overlapping neighbour
+  // (capped at the normal lane width), so no bar is narrower than its real room.
+  let maxRight = 0;
+  rects.forEach((r) => {
+    let bound = availW;                  // nothing to the interior → out to the edge
+    for (const q of rects) {
+      if (q !== r && q.x > r.x && q.x < bound && q.e > r.b && q.b < r.e) bound = q.x;
+    }
+    const room = bound - r.x - (bound < availW ? r.gap : 0);
+    const w = Math.min(LANE_W, Math.max(r.slot - r.gap, room));
+    r.f._x = r.x; r.f._w = w;
+    maxRight = Math.max(maxRight, r.x + w);
+  });
+  return { items: sorted, width: maxRight };
 }
 
 // Era focus: when set, only that era's figures render, re-packed on their own —
@@ -325,8 +399,23 @@ function buildCols() {
   let items = FIGURES;
   if (focusEra) items = items.filter((f) => f.era === focusEra);
   if (selRegions.size) items = items.filter((f) => selRegions.has(f.region));
-  const layout = packLanes(items);
-  const FIELD_W = layout.laneCount * LANE_W;
+  // Two layouts share the same render below. Normal: one width for the whole
+  // chart (packLanes). Compact: a per-bar width set by local crowding, so sparse
+  // stretches keep full width and only dense clusters shrink (packCompact). Each
+  // figure ends up with _x (offset from the reading-start edge) and _w (width).
+  let placedItems, FIELD_W;
+  if (compact) {
+    const axisW = parseFloat(css.getPropertyValue("--axis-w")) || 64;
+    const availW = Math.max(COMPACT_MIN_LANE, chartWrap.clientWidth - axisW - 4);
+    const packed = packCompact(items, availW);
+    placedItems = packed.items;
+    FIELD_W = packed.width;
+  } else {
+    const layout = packLanes(items);
+    placedItems = layout.items;
+    FIELD_W = layout.laneCount * LANE_W;
+    placedItems.forEach((f) => { f._x = f._lane * LANE_W; f._w = LANE_W - LANE_GAP; });
+  }
 
   const field = document.createElement("div");
   field.className = "field";
@@ -334,20 +423,27 @@ function buildCols() {
   field.style.height = totalH + "px";
   // the events sidebar is a separate column now — the field needs no left reserve
 
-  layout.items.forEach((f) => {
+  placedItems.forEach((f) => {
     const top = y(f.born);
     const h = Math.max(y(f.died) - top, MIN_BAR_H);
     const r = REGIONS[f.region];
     const bar = document.createElement("div");
-    bar.className = "bar" + (f.circa ? " circa" : "");
+    // in compact mode the width is per-bar, so the detail tier is too: as a bar
+    // narrows it sheds the region chip, then the years, then the name turns to run
+    // down the bar (vertical). Picked from the bar's own width.
+    const dens = !compact ? "" :
+      f._w >= 116 ? " compact dens-full" :
+      f._w >= 84  ? " compact dens-mid"  :
+      f._w >= 56  ? " compact dens-min"  : " compact dens-vert";
+    bar.className = "bar" + (f.circa ? " circa" : "") + dens;
     bar.dataset.region = f.region;
     bar.dataset.fig = f._idx;
     bar.style.setProperty("--c", ERAS[f.era].color);
     bar.style.top = top + "px";
     bar.style.height = h + "px";
-    // pack lanes from the reading-start edge: right in RTL, left in LTR
-    bar.style[isRTL() ? "right" : "left"] = f._lane * LANE_W + "px";
-    bar.style.width = LANE_W - LANE_GAP + "px";
+    // place from the reading-start edge: right in RTL, left in LTR
+    bar.style[isRTL() ? "right" : "left"] = f._x + "px";
+    bar.style.width = f._w + "px";
     bar.innerHTML =
       `<span class="name">${isRTL() ? f.he : f.en}</span>` +
       `<span class="yrs">${fmtRange(f.born, f.died)}` +
@@ -935,6 +1031,10 @@ function togglePin(f) {
 // gutter width is user-resizable (drag handle on the rail's inner edge); persisted.
 // on phones a 150px+ gutter would swallow the screen, so allow it to go narrower.
 const isMobile = window.innerWidth <= 640;
+// Compact (fit-to-width) view, toggled in the topbar. Default on for the cramped
+// mobile layout, off on desktop; an explicit choice persists in localStorage.
+const savedCompact = localStorage.getItem("compact");
+let compact = savedCompact === "1" ? true : savedCompact === "0" ? false : isMobile;
 const GUTTER_MIN = isMobile ? 92 : 150, GUTTER_MAX = isMobile ? 180 : 480;
 let EVT_GUTTER = (() => {
   const saved = parseFloat(localStorage.getItem("evtGutter"));
@@ -1115,6 +1215,15 @@ function syncRail() {
 chartWrap.addEventListener("scroll", syncRail, { passive: true });
 window.addEventListener("resize", syncRail);
 
+// Compact view is sized to the viewport, so a window resize must re-fit the lanes
+// (and re-evaluate which detail tier shows). Coalesce to one rebuild per frame;
+// the normal layout is width-independent and needs no rebuild.
+let compactResizeRAF = 0;
+window.addEventListener("resize", () => {
+  if (!compact || compactResizeRAF) return;
+  compactResizeRAF = requestAnimationFrame(() => { compactResizeRAF = 0; buildCols(); });
+});
+
 // The events rail is an absolutely-positioned overlay, not a child of the
 // scroller, so wheeling over it never reaches chartWrap. Forward the vertical
 // delta so scrolling works the same anywhere over the rail.
@@ -1179,6 +1288,11 @@ document.getElementById("btn-sec").addEventListener("click", () => setMode("sec"
 document.getElementById("btn-lang-he").addEventListener("click", () => setLang("he"));
 document.getElementById("btn-lang-en").addEventListener("click", () => setLang("en"));
 document.getElementById("show-events").addEventListener("change", renderAll);
+document.getElementById("compact-mode").addEventListener("change", (e) => {
+  compact = e.target.checked;
+  localStorage.setItem("compact", compact ? "1" : "0");
+  buildCols();
+});
 document.getElementById("region-reset").addEventListener("click", clearRegions);
 document.getElementById("map-toggle").addEventListener("click", () =>
   document.getElementById("map-panel").classList.toggle("collapsed"));
@@ -1373,6 +1487,8 @@ function applyLang() {
   setText("btn-heb", t("yearHeb"));
   setText("btn-sec", t("yearSec"));
   setText("evt-label", t("events"));
+  setText("compact-label", t("compact"));
+  setTitle("compact-toggle", t("compactHint"));
   setText("hint", t("hint"));
   setText("map-title", t("mapTitle"));
   setText("map-hint", t("mapHint"));
@@ -1421,6 +1537,7 @@ if (isMobile) {
   document.getElementById("map-panel").classList.add("collapsed");
   document.getElementById("show-events").checked = false;
 }
+document.getElementById("compact-mode").checked = compact;
 // (desktop map width is restored by makeMapResizable from the saved mapWidth)
 
 // `mode` is already resolved (saved choice, else language default); reflect it
