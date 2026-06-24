@@ -35,14 +35,23 @@
   border-bottom: 1px solid #f0d98a;
 }
 .data-warning[hidden] { display: none; }
-.data-warning .dw-icon { flex: 0 0 auto; font-size: 15px; }
+.data-warning .dw-icon { flex: 0 0 auto; font-size: 16px; display: inline-flex; }
 .data-warning .dw-text { flex: 1 1 auto; }
 .data-warning .dw-close {
   flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
-  color: #7a4a00; font-size: 22px; line-height: 1; padding: 0 4px;
+  color: #7a4a00; font-size: 17px; line-height: 1; padding: 0 4px;
+  display: inline-flex; align-items: center;
   opacity: .7; transition: opacity .12s ease;
 }
 .data-warning .dw-close:hover { opacity: 1; }
+
+/* ---------- inline icons (vendored Lucide line icons; see icons.js) ---------- */
+.ic { width: 1em; height: 1em; display: inline-block; flex: 0 0 auto; vertical-align: -0.14em; }
+button .ic, a .ic, .edot .ic, .region-reset .x .ic,
+.eflag .emark .ic, .eflag .smark .ic { vertical-align: middle; }
+/* icons that label flowing text get a small gap from it */
+.ic-book, .ic-pin, .ic-go { margin-inline-end: 5px; }
+.tooltip h4 .ic-book { vertical-align: -0.12em; }
 
 html, body {
   margin: 0; height: 100%;
@@ -242,8 +251,9 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .events .elegend .edot {
   flex: 0 0 auto; width: 13px; height: 13px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 8.5px; color: #fff; line-height: 1;
+  color: #fff; line-height: 1;
 }
+.events .elegend .edot .ic { width: 9px; height: 9px; }
 .events .elegend .edot.world  { background: var(--event); }
 .events .elegend .edot.jewish { background: var(--event-j); }
 .events .elegend .edot.shift  { background: var(--shift); }
@@ -422,6 +432,25 @@ body.col-resizing { cursor: col-resize; user-select: none; }
   fill: var(--muted); paint-order: stroke; stroke: var(--panel); stroke-width: 2.4px;
   stroke-linejoin: round;
 }
+/* loading ring while a border slice fetches — same idea as the Wikipedia
+   drawer's .dspinner, scaled down and toned to the border palette. */
+#map-borders .bloader-dim {
+  fill: #fff; opacity: .45;                      /* dim the map under the spinner */
+}
+#map-borders .bloader-msg {
+  fill: #7a5b2e; font-size: 9px; font-weight: 600;
+  text-anchor: middle; dominant-baseline: hanging;
+}
+#map-borders .bloader-track {
+  fill: none; stroke: var(--line); stroke-width: 2; opacity: .5;
+}
+#map-borders .bloader-arc {
+  fill: none; stroke: #7a5b2e; stroke-width: 2; stroke-linecap: round;
+  stroke-dasharray: 20 62; opacity: .85;         /* arc ≈ a quarter of the ring */
+  transform-box: fill-box; transform-origin: center;
+  animation: bloader-spin .8s linear infinite;
+}
+@keyframes bloader-spin { to { transform: rotate(360deg); } }
 
 #map-routes path {
   fill: none; stroke: var(--shift); stroke-width: 1.3;
