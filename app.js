@@ -1019,6 +1019,14 @@ function syncRail() {
 chartWrap.addEventListener("scroll", syncRail, { passive: true });
 window.addEventListener("resize", syncRail);
 
+// The events rail is an absolutely-positioned overlay, not a child of the
+// scroller, so wheeling over it never reaches chartWrap. Forward the vertical
+// delta so scrolling works the same anywhere over the rail.
+document.getElementById("events").addEventListener("wheel", (e) => {
+  chartWrap.scrollTop += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
+
 // ---------- correlation line (fixed across the chart, follows vertical scroll) ----------
 const ehl = document.createElement("div");
 ehl.className = "ehl";
