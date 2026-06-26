@@ -32,7 +32,7 @@ Then open <http://localhost:4178/>. (Use a server rather than opening
 
 ## A note on how this was built
 
-This project (includding this README) was **vibe coded** — built conversationally with an AI coding
+All of this project (including this README) was **vibe coded** — built conversationally with an AI coding
 assistant (Mostly Claude Opus 4.8) rather than hand-architected up front. Expect the occasional rough
 edge, and please don't treat the structure as gospel.
 
