@@ -789,12 +789,14 @@ function loadAndPaint(slice) {
     });
 }
 function showBorders(f) { const y = figureYear(f); loadAndPaint(nearestSlice(y)); syncSlider(y); }
-// Resting state: with no sage hovered, the map shows the user's chosen scrubber
-// year if they set one, else present-day borders (the most recent slice). Hover
-// swaps in the era map; mouseleave returns here.
+// Resting border year (no sage hovered), in priority order: the user's chosen
+// scrubber year if they dragged one; else a pinned sage's era; else present-day
+// (the most recent slice). Hover swaps in the era map; mouseleave returns here.
 function restBorders() {
   if (!BORDER_YEARS || !BORDER_YEARS.length) return;
-  const y = manualYear != null ? manualYear : BORDER_YEARS[BORDER_YEARS.length - 1];
+  const y = manualYear != null ? manualYear
+          : pinnedFig != null ? figureYear(pinnedFig)
+          : BORDER_YEARS[BORDER_YEARS.length - 1];
   loadAndPaint(nearestSlice(y));
   syncSlider(y);
 }
@@ -835,11 +837,11 @@ function initBorderSlider() {
   borderSlider.min = BORDER_YEARS[0];
   borderSlider.max = BORDER_YEARS[BORDER_YEARS.length - 1];
   borderSlider.value = BORDER_YEARS[BORDER_YEARS.length - 1];
-  // Dragging the scrubber sets a manual resting year. A pinned sage would
-  // otherwise win on mouseleave, so an explicit date choice unpins him.
+  // Dragging the scrubber sets a manual border year that holds at rest. It only
+  // overrides the *borders* — a pinned sage's location pin stays put, so you can
+  // hold a sage on the map and still scrub the political borders around him.
   borderSlider.addEventListener("input", () => {
     manualYear = +borderSlider.value;
-    if (pinnedFig) { togglePin(pinnedFig); return; }   // unpin → restoreMap → restBorders(manualYear)
     loadAndPaint(nearestSlice(manualYear));
     updateSliderLabel(manualYear);
   });
@@ -961,11 +963,14 @@ function hidePin() {
 // sages; leaving a bar returns to the pinned sage (or the resting map if none).
 let pinnedFig = null;
 function restoreMap() {
-  if (pinnedFig) { showBorders(pinnedFig); showPin(pinnedFig); }
-  else { restBorders(); hidePin(); }
+  // location pin follows the pinned sage; the border year is resolved separately
+  // by restBorders (a dragged scrubber year can override the sage's era).
+  if (pinnedFig) showPin(pinnedFig); else hidePin();
+  restBorders();
 }
 function togglePin(f) {
   pinnedFig = (pinnedFig === f) ? null : f;
+  manualYear = null;          // a fresh pin/unpin re-centres the map on the sage's era
   document.querySelectorAll(".bar.pinned").forEach((b) => b.classList.remove("pinned"));
   document.querySelectorAll(".bar").forEach((b) => {
     const btn = b.querySelector(".bar-pin");
