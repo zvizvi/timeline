@@ -1145,7 +1145,7 @@ const FIGURES = [
     books: [{ y: 1320, he: "ארחות חיים", en: "Orchot Chaim (halachic compendium)" }],
   },
   {
-    era: "rishonim", he: "רלב\"ג (גרשון)", en: "Ralbag (Gersonides)",
+    era: "rishonim", he: "רלב\"ג (לוי בן גרשום)", en: "Ralbag (Gersonides)",
     born: 1288, died: 1344, region: "provans", place: "באניולס, פרובנס",
     w: "רלב\"ג", note: "פרשן, פילוסוף, מתמטיקאי ואסטרונום.",
     books: [{ y: 1329, he: "מלחמות השם / פירוש הנ\"ך", en: "Milchamot Hashem; Bible commentary" }],
